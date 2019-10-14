@@ -5,6 +5,8 @@ const std_msgs = rosnodejs.require('std_msgs');
 const sensors_msgs = rosnodejs.require('sensor_msgs');
 const geometry_msg = rosnodejs.require('geometry_msgs');
 const mavros_msgs = rosnodejs.require('mavros_msgs');
+const nav_msgs = rosnodejs.require('nav_msgs');
+
 const Promise = require('bluebird')
 const Redis = require('ioredis')
 const uuidv1 = require('uuid/v1');
@@ -15,6 +17,14 @@ const pub = new Redis(config.redis)
 
 const NODE_COUNT_KEY = 'rosListeners'
 const NODES_INFO_KEY = 'nodes'
+
+
+const FRAME_GLOBAL_REL_ALT = 3
+const MAV_CMD_TAKEOFF = 22
+const MAV_CMD_WAYPOINT = 16
+const MAV_CMD_NAV_RETURN_TO_LAUNCH = 20
+const FRAME_MISSION = 2
+
 
 let nodeId = uuidv1()
 let rosNode
@@ -141,75 +151,87 @@ function onRedisMessage(channel, _msg){
 const onBatteryUpdate = (copterId) => (data) => {
   battPercentage = data.percentage
   emitter.to(`copter_${copterId}`).emit(`/${copterId}/battery`, data)
-  debugMessage(`/${copterId}/battery`, data)
+  //debugMessage(`/${copterId}/battery`, data)
 }
 
 const onGlobalPositionGlobalUpdate = (copterId) => (data) => {
   emitter.to(`copter_${copterId}`).emit(`/${copterId}/global_position/global`, data)
-  debugMessage(`/${copterId}/global_position/global`, data)
+  //debugMessage(`/${copterId}/global_position/global`, data)
   //update()
 }
 
 
 const onGlobalPositionLocalUpdate = (copterId) => (data) => {
   emitter.to(`copter_${copterId}`).emit(`/${copterId}/global_position/local`, data)
-  debugMessage(`/${copterId}/global_position/local`, data)
+  //debugMessage(`/${copterId}/global_position/local`, data)
 }
 
 const onRelativeAltitudeUpdate = (copterId) => (data) => {
   emitter.to(`copter_${copterId}`).emit(`/${copterId}/global_position/rel_alt`, data)
-  debugMessage(`/${copterId}/global_position/rel_alt`, data)
+  //debugMessage(`/${copterId}/global_position/rel_alt`, data)
 }
 
 const onGpsVelUpdate = (copterId) => (data) => {
   emitter.to(`copter_${copterId}`).emit(`/${copterId}/global_position/gps_vel`, data)
-  debugMessage(`/${copterId}/global_position/raw/gps_vel`, data)
+  //debugMessage(`/${copterId}/global_position/raw/gps_vel`, data)
 }
 const debugMessage = (topic, data) => {
-  //console.log('Topic: ' + topic, JSON.stringify(data, null, 2))
+  console.log('Topic: ' + topic, JSON.stringify(data, null, 2))
 }
-
+const onWaypointList = (copterId) => (data) => {
+  debugMessage(`/${copterId}/mission/waypoints`, data)
+}
+const onWaypointReached = (copterId) => (data) => {
+  debugMessage(`/${copterId}/mission/reached`, data)
+}
 const armAndTakeoff = (copterId, latitude, longitude, altitude) => {
   console.log("Arming " + copterId)
   let node = copters[copterId]
+  // mode and arm service
   const modeClient = node.serviceClient(`/${copterId}/set_mode`, 'mavros_msgs/SetMode');
-  const landClient = node.serviceClient(`/${copterId}/cmd/land`, 'mavros_msgs/CommandTOL');
   const armClient = node.serviceClient(`/${copterId}/cmd/arming`, 'mavros_msgs/CommandBool');
+
+  // land service
+  const landClient = node.serviceClient(`/${copterId}/cmd/land`, 'mavros_msgs/CommandTOL');
+
+  // takeoff service
   const takeoffClient = node.serviceClient(`/${copterId}/cmd/takeoff`, 'mavros_msgs/CommandTOL');
-  const setPaPub = node.advertise(`/${copterId}/setpoint_raw/local`, 'mavros_msgs/PositionTarget');
+
+  // mission services
+  const missionPullClient = node.serviceClient(`/${copterId}/mission/pull`, 'mavros_msgs/WaypointPull');
+  const missionPushClient = node.serviceClient(`/${copterId}/mission/push`, 'mavros_msgs/WaypointPush');
+
+  // publisher
+  const setPaPub = node.advertise(`/${copterId}/setpoint_raw/global`, 'mavros_msgs/GlobalPositionTarget');
+  const setVelPub = node.advertise(`/${copterId}/setpoint_attitude/cmd_vel`, 'geometry_msgs/TwistStamped');
+
   modeClient.call({
-    base_mode: 220,
+    base_mode: 216,
     custom_mode: 'GUIDED'
   })
   .then((data) => {
     console.log(data)
-    return data
+    return Promise.delay(10000).then(() => data)
+    //return data
   })
-  .then(({mode_sent}) => mode_sent ? armClient.call({value: true}) : ({success: false}))
+
+  .then(({mode_sent}) => mode_sent ? armClient.call({value: true}) : ({success: true}))
   .then(({success}) => {
     console.log('Arming status: ' + success)
     if(success){
       console.log('Taking off');
-      return Promise.delay(5000).then(()=>takeoffClient.call({min_pitch: 1, yaw: 1, latitude, longitude, altitude}))
+      //return {success: true}
+      return Promise.delay(5000).then(() => success) //.then(() => takeoffClient.call({min_pitch: 1, yaw: 1, latitude, longitude, altitude}))
     }
     else {
       return { success: false}
     }
   })
-  .then(({success}) => {
-    console.log(success ? 'Takeoff started' : 'Takeoff failed')
-    return success
-  })
-  .then(success =>{
-    if(success){
-      return Promise.delay(10000)
-    } else {
-      throw new Error('Not flyng')
-    }
-  })
+
   .then(async (success) => {
     console.log("Sending attitude")
-    let msg = {
+
+    let msgAtt = {
       header: {
         "seq": 387999,
         "stamp": {
@@ -218,49 +240,66 @@ const armAndTakeoff = (copterId, latitude, longitude, altitude) => {
         },
         "frame_id": ""
       },
-      type_mask: 512,
-      position:{
-        x: 0,
-        y: 0,
+      coordinate_frame: 5,
+      type_mask: 4088,
+      latitude,
+      longitude,
+      altitude,
+      velocity: {
+        x: 1,
+        y: 1,
         z: 0
       },
       acceleration_or_force: {
-        x: 0,
-        y: 0,
+        x: 1,
+        y: 1,
         z: 0
-      },
-      velocity: {
-        x: 0,
-        y: 0,
-        z: 0
-      },
-      yaw_rate: 0
+      }
+    }
+    //await setPaPub.publish(msgAtt)
 
-    }
-    for(let i = 0; i < 100; i++){
-        await setPaPub.publish(msg)
-        await Promise.delay(100)
-        msg.header.seq++
-    }
-    await modeClient.call({
-      base_mode: 192,
-      custom_mode: 'OFFBOARD'
-    }).then((res)=>{
-      console.log(res)
-      return Promise.delay(5000)
+
+    let mission = await missionPushClient.call({
+      start_index: 0,
+      waypoints: [{
+        frame: FRAME_GLOBAL_REL_ALT,
+        command: MAV_CMD_TAKEOFF,
+        is_current: true,
+        autocontinue: true,
+        param1: 0,
+        param2: 0,
+        param3: 0,
+        param4: 0,
+        x_lat: 37.527175,
+        y_long: 15.113881,
+        z_alt: 100
+      }
+
+      /*,{
+          frame: FRAME_GLOBAL_REL_ALT,
+          command: MAV_CMD_WAYPOINT,
+          is_current: false,
+          autocontinue: true,
+          x_lat: 37.529227,
+          y_long: 15.113171,
+          z_alt: 15
+      },{
+          frame: FRAME_MISSION,
+          command: MAV_CMD_NAV_RETURN_TO_LAUNCH,
+          is_current: false,
+          autocontinue: true,
+          x_lat: 0,
+          y_long: 0,
+          z_alt: 0
+      }*/]
     })
-    msg.velocity.y = 0.4
-    msg.acceleration_or_force.y = 0.4
-    msg.position.y = 0.4
-    //msg.position.x = 100
+    for(let i = 0; i < 10; i++){
 
-    for(let i = 0; i < 100; i++){
-        await setPaPub.publish(msg)
-        await Promise.delay(100)
-        console.log("Sending msg");
-        msg.header.seq++
-        msg.header.stamp.secs++
+        await Promise.delay(1000)
+        console.log(mission)
+        mission = await missionPullClient.call()
     }
+
     console.log("Sending land cmd");
     return landClient.call({min_pitch: 1, yaw: 1, latitude, longitude, altitude: 0})
   })
@@ -300,11 +339,14 @@ const connetToCopter = (copterId) => {
   coptersList.push(copterId)
   rosNode.subscribe(`/${copterId}/battery`, sensors_msgs.msg.BatteryState, onBatteryUpdate(copterId));
   rosNode.subscribe(`/${copterId}/global_position/global`, sensors_msgs.msg.NavSatFix, onGlobalPositionGlobalUpdate(copterId));
-  rosNode.subscribe(`/${copterId}/global_position/local`, geometry_msg.msg.PoseWithCovarianceStamped, onGlobalPositionLocalUpdate(copterId));
+  rosNode.subscribe(`/${copterId}/global_position/local`, nav_msgs.msg.Odometry, onGlobalPositionLocalUpdate(copterId));
   rosNode.subscribe(`/${copterId}/global_position/rel_alt`, std_msgs.msg.Float64, onRelativeAltitudeUpdate(copterId));
+  rosNode.subscribe(`/${copterId}/mission/reached`, mavros_msgs.msg.WaypointReached, onWaypointReached(copterId));
+  rosNode.subscribe(`/${copterId}/mission/waypoints`, mavros_msgs.msg.WaypointList, onWaypointList(copterId));
+
   rosNode.subscribe(`/${copterId}/global_position/raw/gps_vel`, geometry_msg.msg.TwistStamped, onGpsVelUpdate(copterId));
-  armAndTakeoff(copterId, 37.527337, 15.112690, 10)
-  return Promise.resolve()
+  return armAndTakeoff(copterId, 37.527337, 15.112690, 10)
+  //return Promise.resolve()
 }
 
 
