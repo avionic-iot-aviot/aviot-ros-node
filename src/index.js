@@ -418,6 +418,15 @@ const armAndTakeoffOld = (copterId, latitude, longitude, altitude) => {
   })*/
 }
 
+const land = (copterId, latitude, longitude, altitude) => {
+  const node = getRosNode()
+  if(!node){
+    throw new Error('Ros not connected')
+  }
+  const landClient = node.serviceClient(`/${copterId}/cmd/land`, 'mavros_msgs/CommandTOL');
+  landClient.call({min_pitch: 1, yaw: 1, latitude, longitude, altitude})
+
+}
 
 const sendCmdVel = (copterId, x, y, z) => {
   const node = getRosNode()
@@ -442,6 +451,9 @@ const onCmdReceived = (copterId) => (topic, message) => {
       break;
     case 'TAKEOFF':
       armAndTakeoff(copterId, data.latitude, data.longitude, data.altitude)
+      break;
+    case 'LAND':
+      land(copterId, data.latitude, data.longitude, data.altitude)
       break;
     default:
 
