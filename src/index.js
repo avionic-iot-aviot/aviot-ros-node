@@ -1,6 +1,8 @@
 import Emitter from 'socket.io-emitter'
 import config from '../config'
-const rosnodejs = require('rosnodejs');
+//const rosnodejs = require('rosnodejs');
+const rosnodejs = require('./services/rosnodejs/src');
+
 const std_msgs = rosnodejs.require('std_msgs');
 const sensors_msgs = rosnodejs.require('sensor_msgs');
 const geometry_msg = rosnodejs.require('geometry_msgs');
@@ -178,6 +180,7 @@ const onStateUpdate = (copterId) => ({ connected, armed, guided, mode, system_st
   emitter.to(`copter_${copterId}`).emit(`/${copterId}/state`, { connected, armed, guided, mode, system_status })
   const info = copters[copterId].info
   copters[copterId].info = { ...info, connected, armed, guided, mode, system_status }
+  //debugMessage(`/${copterId}/state`, { connected, armed, guided, mode, system_status })
 }
 const onGpsVelUpdate = (copterId) => (data) => {
   emitter.to(`copter_${copterId}`).emit(`/${copterId}/global_position/gps_vel`, data)
@@ -428,13 +431,23 @@ const land = (copterId, latitude, longitude, altitude) => {
 
 }
 
-const sendCmdVel = (copterId, x, y, z) => {
+const sendCmdVel = (copterId, x, y, z, _x=0, _y=0, _z=0) => {
   const node = getRosNode()
   const setVelPub = node.advertise(`/${copterId}/setpoint_velocity/cmd_vel`, 'geometry_msgs/TwistStamped');
-  return setVelPub.publish({
+  const setAngPub = node.advertise(`/${copterId}/setpoint_attitude/cmd_vel`, 'geometry_msgs/TwistStamped');
+  //console.log('Publishing', {twist: { linear: { x, y, z }, angular: { x: 60, y: 0, z: 0} }});
+
+  setVelPub.publish({
     header: getHeader(),
-    twist: { linear: { x, y, z }, angular: { x: 0, y: 0, z: 0} }
+    twist: { linear: { x, y, z }, angular: { x: _x, y: _y, z: _z } }
   })
+  /*
+  setAngPub.publish({
+    header: getHeader(),
+    twist: { linear: { x, y, z }, angular: { x, y, z} }
+  })
+  */
+
 }
 
 
@@ -483,7 +496,18 @@ const connetToCopter = (copterId) => {
     }
   }
   coptersList.push(copterId)
-  rosNode.subscribe(`/${copterId}/battery`, sensors_msgs.msg.BatteryState, onBatteryUpdate(copterId));
+  rosNode.subscribe(`/chatters`, std_msgs.msg.String, onBatteryUpdate(copterId), {
+    transport: 'UDPROS'
+  });
+  rosNode.subscribe(`/${copterId}/battery`, sensors_msgs.msg.BatteryState, onBatteryUpdate(copterId), {
+    transport: 'UDPROS'
+  });
+
+  rosNode.subscribe(`/${copterId}/battery`, sensors_msgs.msg.BatteryState, onBatteryUpdate(copterId), {
+    transport: 'TCPROS'
+  });
+
+  /*
   rosNode.subscribe(`/${copterId}/state`, mavros_msgs.msg.State, onStateUpdate(copterId));
   rosNode.subscribe(`/${copterId}/global_position/global`, sensors_msgs.msg.NavSatFix, onGlobalPositionGlobalUpdate(copterId));
   rosNode.subscribe(`/${copterId}/global_position/local`, nav_msgs.msg.Odometry, onGlobalPositionLocalUpdate(copterId));
@@ -501,16 +525,20 @@ const connetToCopter = (copterId) => {
   cmdVelSub.on('message', onCmdVelReceived(copterId))
 
   //return armAndTakeoff(copterId, 37.527337, 15.112690, 40)
+  */
   return Promise.resolve()
+
 }
 
-rosnodejs.initNode(`/${nodeId.replace(/-/g, '_')}`, {
+//rosnodejs.initNode(`/${nodeId.replace(/-/g, '_')}`, {
+rosnodejs.initNode(`/listener_unreliable`, {
+
 /* rosMasterUri: 'udp://192.168.100.224:37639' */
 })
 .then((client) => {
   console.log("Connected to ros, Waiting for connection request");
   rosNode = client
-  //connetToCopter('mavros')
+  connetToCopter('mavros')
 })
 
 
