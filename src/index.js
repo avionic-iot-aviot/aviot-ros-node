@@ -1,7 +1,9 @@
 import Emitter from 'socket.io-emitter'
 import config from '../config'
+import {createVideoRoom, createVideoStream, deleteVideoRoom, deleteVideoStream} from './services/janus'
+
 //const rosnodejs = require('rosnodejs');
-const rosnodejs = require('./services/rosnodejs');
+const rosnodejs = require('rosnodejs');
 
 const std_msgs = rosnodejs.require('std_msgs');
 const sensors_msgs = rosnodejs.require('sensor_msgs');
@@ -38,6 +40,9 @@ let rosNode
 let signals = ['SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGILL', 'SIGTRAP', 'SIGABRT',
 'SIGBUS', 'SIGFPE', 'SIGUSR1', 'SIGSEGV', 'SIGUSR2', 'SIGTERM'
 ]
+
+let feeds = {}
+let videorooms = {}
 
 let args = process.argv.slice(2);
 let nodeName
@@ -149,7 +154,7 @@ function onRedisMessage(channel, _msg){
     .then(()=> redis.get(NODES_INFO_KEY))
     .then((list) => list ? JSON.parse(list) : [])
     .then((list) => {
-      node = nodes.find(n => n.uuid === nodeId)
+      let node = nodes.find(n => n.uuid === nodeId)
       if(node){
         nodes.splice(node, 1, nodeInfo)
       } else {
@@ -264,10 +269,9 @@ const land = (copterId, latitude, longitude, altitude) => {
 
 const sendCmdVel = (copterId, setVelPub, linear={x:0, y:0, z:0}, angular={x:0, y:0, z:0}) => {
 
-  
+
   //const setAngPub = node.advertise(`/${copterId}/setpoint_attitude/cmd_vel`, 'geometry_msgs/TwistStamped');
   //console.log('Publishing', {twist: { linear: { x, y, z }, angular: { x: 60, y: 0, z: 0} }});
-  console.log(setVelPub)
   setVelPub.publish({
     header: getHeader(),
     twist: { linear, angular }
@@ -303,6 +307,60 @@ const onCmdReceived = (copterId) => (topic, message) => {
 
   }
 }
+
+const onStreamingCmd = (copterId, startStreamingPub, stopStreamingPub) => (topic, message) => {
+
+  let data = JSON.parse(message)
+  console.log(data)
+  if(data.action === 'start'){
+    createVideoStream(copterId)
+      .then(res => {
+        startStreamingPub.publish({
+          header: getHeader(),
+          data: JSON.stringify(res.data)
+        })
+        emitter.to(`copter_${copterId}`).emit(`/${copterId}/streaming`, {...res.data, action: 'start'})
+        feeds[copterId] = res.data.janus_feed_id
+
+      })
+  } else if (data.action === 'stop') {
+    stopStreamingPub.publish({
+      header: getHeader(),
+      data: JSON.stringify({janus_feed_id: feeds[copterId]})
+    })
+    emitter.to(`copter_${copterId}`).emit(`/${copterId}/streaming`, { action: 'stop' })
+    deleteVideoStream(feeds[copterId])
+  } else {
+    console.log('Action not found')
+  }
+
+}
+
+const onVideoRoomCmd = (copterId, startVideoRoomPub, stopVideoRoomPub) => (topic, message) => {
+  let data = JSON.parse(message)
+  console.log('Video Room msg ', data)
+  if(data.action === 'start'){
+    createVideoRoom(copterId)
+      .then(res => {
+        startVideoRoomPub.publish({
+          header: getHeader(),
+          data: JSON.stringify(res.data)
+        })
+        console.log('sending ws response', res.data)
+        emitter.to(`copter_${copterId}`).emit(`/${copterId}/video_room`, {...res.data, action: 'start'})
+        videorooms[copterId] = res.data.videoroom_name
+      })
+  } else if (data.action === 'stop') {
+    stopVideoRoomPub.publish({
+      header: getHeader(),
+      data: JSON.stringify({videoroom_name: videorooms[copterId]})
+    })
+    emitter.to(`copter_${copterId}`).emit(`/${copterId}/video_room`, { action: 'stop' })
+    deleteVideoRoom(videorooms[copterId])
+  } else {
+    console.log('Action not found')
+  }
+}
 console.log(config.redis)
 const emitter = Emitter(config.redis)
 
@@ -313,8 +371,10 @@ const disconnetFromCopter = () => Promise.resolve()
 const connetToCopter = (copterId) => {
   let cmdVelSub = new Redis(config.redis)
   let copterSub = new Redis(config.redis)
+  let streamingSub = new Redis(config.redis)
+  let videoRoomSub = new Redis(config.redis)
   let geoFenceSub = new Redis(config.redis)
-  
+
   if(copters[copterId]){
     return Promise.resolve()
   }
@@ -331,11 +391,11 @@ const connetToCopter = (copterId) => {
   }
   coptersList.push(copterId)
   let options = {
-    udp: true,
-    tcp: false,
+    transports: ["UDPROS"],
     dgramSize: 1500,
     udpFirst: true
   }
+  // copter information
   rosNode.subscribe(`/${copterId}/battery`, sensors_msgs.msg.BatteryState, onBatteryUpdate(copterId), options);
   rosNode.subscribe(`/${copterId}/state`, mavros_msgs.msg.State, onStateUpdate(copterId));
   rosNode.subscribe(`/${copterId}/global_position/global`, sensors_msgs.msg.NavSatFix, onGlobalPositionGlobalUpdate(copterId), options);
@@ -345,16 +405,31 @@ const connetToCopter = (copterId) => {
   //rosNode.subscribe(`/${copterId}/mission/waypoints`, mavros_msgs.msg.WaypointList, onWaypointList(copterId));
   //rosNode.subscribe(`/${copterId}/global_position/raw/gps_vel`, geometry_msg.msg.TwistStamped, onGpsVelUpdate(copterId));
   // TODO: save ref and destroy on disconnect
-  console.log('Subscrbing to redis', `/${copterId}`, `/${copterId}/cmd_vel`);
+
+
+  // copter commands
   const setVelPub = rosNode.advertise(`/${copterId}/setpoint_velocity/cmd_vel`, 'geometry_msgs/TwistStamped')
-  console.log(setVelPub)
-  copterSub.subscribe(`/${copterId}`)
-  copterSub.on('message', onCmdReceived(copterId))
   cmdVelSub.subscribe(`/${copterId}/cmd_vel`)
   cmdVelSub.on('message', onCmdVelReceived(copterId, setVelPub))
 
+  // arm - takeoff - land
+  copterSub.subscribe(`/${copterId}`)
+  copterSub.on('message', onCmdReceived(copterId))
+
+  // streaming
+  const startStreamingPub = rosNode.advertise(`/${copterId}/start_video_streaming`, 'std_msgs/String')
+  const stopStreamingPub = rosNode.advertise(`/${copterId}/stop_video_streaming`, 'std_msgs/String')
+  streamingSub.subscribe(`/${copterId}/streaming`)
+  streamingSub.on('message', onStreamingCmd(copterId, startStreamingPub, stopStreamingPub))
+
+  // video room
+  const startVideoRoomPub = rosNode.advertise(`/${copterId}/start_video_room`, 'std_msgs/String')
+  const stopVideoRoomPub = rosNode.advertise(`/${copterId}/stop_video_room`, 'std_msgs/String')
+  videoRoomSub.subscribe(`/${copterId}/video_room`)
+  videoRoomSub.on('message', onVideoRoomCmd(copterId, startVideoRoomPub, stopVideoRoomPub))
+
   //return armAndTakeoff(copterId, 37.527337, 15.112690, 40)
-  
+
   return Promise.resolve()
 
 }
@@ -371,6 +446,5 @@ sub.on('message', onRedisMessage)
 
 let battPercentage=0, lat=0, lng=0, alt=0
 
-function update(){
-  console.log(`Battery: ${Math.round(battPercentage * 100)}%, Lat: ${lat}, Lng: ${lng}, Altitude: ${alt}`)
-}
+
+
