@@ -1,3 +1,4 @@
+import { node } from 'rosnodejs/dist/lib/ThisNode';
 import Emitter from 'socket.io-emitter'
 import config from '../config'
 import {createVideoRoom, createVideoStream, deleteVideoRoom, deleteVideoStream} from './services/janus'
@@ -50,7 +51,6 @@ if(args[0] === '--publish'){
   nodeName = 'publisher'
 } else nodeName = 'subscriber'
 
-signals.forEach(function(sig){process.on(sig, cleanup)});
 
 const nodeInfo = {
   uuid: nodeId,
@@ -58,112 +58,95 @@ const nodeInfo = {
 }
 
 
-redis.on('connect', function(){
-  console.log('Connected to redis, registering with id: ', nodeId);
-  redis.get(NODE_COUNT_KEY)
-  .then(nodeCount => nodeCount ? Number(nodeCount) : 0)
-  .then(nodeCount => {
-    console.log('Node count: ' + (nodeCount +1));
-    return nodeCount
-  })
-  .then(nodeCount => redis.set(NODE_COUNT_KEY, nodeCount + 1))
-  .then(()=> redis.get(NODES_INFO_KEY))
-  .then(nodes => nodes ? JSON.parse(nodes) : [])
-  .then(nodes => {
-    console.log("Node ID: ", nodeId)
-    console.log("Nodes - redis value ", nodes);
-    let n = nodes.concat([nodeInfo])
-    console.log("Nodes - inserting value ", n);
-    return n
-  })
-  .then(nodes => redis.set(NODES_INFO_KEY, JSON.stringify(nodes)))
-  .then(() => {
-    console.log('Connected to redis with instance id: ' + nodeId)
-    sub.subscribe('copters', 'keepalive')
-  })
+redis.on('connect', async function(){
+  console.log(`Connecting to redis with instance id: ${nodeId}`);
 
+  await redis.incr(NODE_COUNT_KEY)
+  let nodes = await redis.get(NODES_INFO_KEY).then(n => n ? JSON.parse(n) : [])
+  
+  console.log(`Online nodes: ${JSON.stringify(nodes, null, 2)}`);
+  nodes = nodes.concat([nodeInfo])
+
+  await redis.set(NODES_INFO_KEY, JSON.stringify(nodes))
+  console.log(`Connected to redis with instance id: ${nodeId}`)
+  sub.subscribe('copters', 'keepalive')
+  
 })
 
-function cleanup(){
-  console.log("Closing redis connection for nodeID: ", nodeId);
-  redis.get(NODE_COUNT_KEY)
-  .then(nodeCount => Number(nodeCount) || 0)
-  .then((nodeCount) => {
-    console.log("Node Count: " + (nodeCount - 1));
-    return nodeCount
-  })
-  .then((nodeCount) => redis.set(NODE_COUNT_KEY, nodeCount ?  nodeCount - 1 : 0))
-  .then(() => redis.get(NODES_INFO_KEY))
-  .then((nodes) => {
-    console.log(nodes);
-    return nodes
-  })
-  .then((nodes) => nodes ? JSON.parse(nodes) : [])
-  .then(nodes => {
-    console.log("Node ID: ", nodeId)
-    console.log("Nodes - redis value ", nodes);
-    let node = nodes.findIndex(n => n.uuid === nodeId)
-    console.log(node)
-    if(!!~node){
-      nodes.splice(node, 1)
-    }
-    console.log("Nodes - inserting value: ", nodes);
-    return nodes
-  })
-  .then(nodes => redis.set(NODES_INFO_KEY, JSON.stringify(nodes)))
-  .then(() => console.log("Redis cleaned, quitting"))
-  .catch((err) => {
-    console.log(err)
-    throw err
-  })
+const cleanup = async() => {
+
+
+  console.log(`Closing redis connection for node: ${nodeId}`);
+
+  const nodeCount = await redis.get(NODE_COUNT_KEY).then(n => Number(n) || 0)
+  await redis.set(NODE_COUNT_KEY, nodeCount ?  nodeCount - 1 : 0)
+
+  const nodes = await redis.get(NODES_INFO_KEY).then((n) => n ? JSON.parse(n) : [])
+  console.log("Nodes - redis value ", nodes);
+  
+  let node = nodes.findIndex(n => n.uuid === nodeId)
+  if(!!~node){
+    nodes.splice(node, 1)
+  }
+  console.log("Nodes - inserting value: ", nodes)
+  
+  await redis.set(NODES_INFO_KEY, JSON.stringify(nodes))
+  console.log("Redis cleaned, quitting")
+  
 }
 
-function onRedisMessage(channel, _msg){
-  let msg = JSON.parse(_msg)
-  console.log('Received message: ', msg);
-  console.log('Node Id: ', nodeId)
-  if(channel === 'keepalive' && msg === 'ack'){
-    pub.publish(NODES_INFO_KEY, JSON.stringify(nodeInfo))
-  }
-  if(channel === 'copters' && msg.uuid === nodeId && msg.action === 'connect'){
-    connetToCopter(msg.copterId)
-    .then(() => {
-      nodeInfo.copters.push(msg.copterId)
-    })
-    .then(()=> redis.get(NODES_INFO_KEY))
-    .then(JSON.parse)
-    .then((nodes) => {
-      let node = nodes.findIndex(n => n.uuid === nodeId)
-      if(!!~node){
-        nodes.splice(node, 1, nodeInfo)
-      } else {
-        nodes.push(nodeInfo)
+const onRedisMessage = async (channel, _msg) => {
+
+  try{
+    const { copterId, action, uuid } = JSON.parse(_msg)
+    
+    if(uuid !== nodeId){
+      return null
+    }
+
+    console.log(`NodeId: ${nodeId}, Received message:  ${_msg}`);
+
+    // case: keep alive message
+    if(channel === 'keepalive' && action === 'ack'){
+      pub.publish(NODES_INFO_KEY, JSON.stringify(nodeInfo))
+    }
+
+    // case: connect
+    if(channel === 'copters' && action === 'connect'){
+      // connecting to copter
+      let res = await connetToCopter(copterId)
+      if(!res){
+        throw new Error(`Unable to connect to copter with id: ${copterId}`)
       }
-      return nodes
-    })
-    .then((nodes) => redis.set(NODES_INFO_KEY, JSON.stringify(nodes)))
-  }
-  if(channel === 'copters' && msg.uuid === nodeId && msg.action === 'disconnect'){
-    disconnetFromCopter(msg.copterId)
-    .then(() => {
-      let cop = nodeInfo.copters.findIndex(c => c === msg.copterId)
+      
+      nodeInfo.copters.push(copterId)
+      // add copter to node's copter list
+      let nodes = await redis.get(NODES_INFO_KEY).then(JSON.parse)
+      !!~nodes.findIndex(n => n.uuid === nodeId) ? nodes.splice(node, 1, nodeInfo) : nodes.push(nodeInfo)
+      await redis.set(NODES_INFO_KEY, JSON.stringify(nodes))
+      
+    }
+    
+    // case: disconnect
+    if(channel === 'copters' && action === 'disconnect'){
+      //disconnect from copter
+      let res = await disconnetFromCopter(copterId)
+      if(!res){
+        throw new Error(`Unable to disconnect from copter with id: ${copterId}`)
+      }
+      let cop = nodeInfo.copters.findIndex(c => c === copterId)
       if(!!~cop){
         nodeInfo.copters.splice(cop, 1)
       }
-    })
-    .then(()=> redis.get(NODES_INFO_KEY))
-    .then((list) => list ? JSON.parse(list) : [])
-    .then((list) => {
-      let node = nodes.find(n => n.uuid === nodeId)
-      if(node){
-        nodes.splice(node, 1, nodeInfo)
-      } else {
-        nodes.push(nodeInfo)
-      }
-      return nodes
-    })
-    .then((list) => redis.set(NODES_INFO_KEY, JSON.stringify(list)))
-    .then((list) => copterList.length && !!~copterList.indexOf(copterId) ? [] : copterList.splice(copterList.indexOf(copterId), 1))
+      // remove copter from node's copter list
+      let nodes = await redis.get(NODES_INFO_KEY).then(JSON.parse)
+      nodes.find(n => n.uuid === nodeId) ? nodes.splice(node, 1, nodeInfo) : nodes.push(nodeInfo)
+      await redis.set(NODES_INFO_KEY, JSON.stringify(nodes))
+      
+      
+    }
+  }catch(err){
+    console.error(`An error occurred in redis message handler: ${err.message}`, err)
   }
 }
 
@@ -430,7 +413,7 @@ const connetToCopter = (copterId) => {
 
   //return armAndTakeoff(copterId, 37.527337, 15.112690, 40)
 
-  return Promise.resolve()
+  return true
 
 }
 
@@ -447,4 +430,5 @@ sub.on('message', onRedisMessage)
 let battPercentage=0, lat=0, lng=0, alt=0
 
 
+signals.forEach(function(sig){process.on(sig, cleanup)});
 
