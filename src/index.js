@@ -248,6 +248,16 @@ const onGeoFence = (copterId) => async (topic, message) => {
   emitter.to(`copter_${copterId}`).emit(`/${copterId}/fence`, { action, data, res })
 }
 
+const onRttTestCmd = (copterId) => (topic, message) => {
+  logger.debug('rtt_test: '+Date.now())
+  const copter = copters[copterId]
+  copter.rttTest()
+}
+const onRttRespUpdate = (copterId) => (data) => {
+  logger.debug('rtt_resp: '+Date.now())
+  emitter.to(`copter_${copterId}`).emit(`/${copterId}/rtt_resp`, { })
+}
+
 
 logger.debug(config.redis)
 const emitter = Emitter(config.redis)
@@ -267,6 +277,7 @@ const connetToCopter = (copterId) => {
   let streamingSub = new Redis(config.redis)
   let videoRoomSub = new Redis(config.redis)
   let geoFenceSub = new Redis(config.redis)
+  let rttTestSub = new Redis(config.redis)
 
   
   let copter = new Copter(rosNode, copterId)
@@ -277,6 +288,8 @@ const connetToCopter = (copterId) => {
   copter.addListener('battery', onBatteryUpdate(copterId))
   copter.addListener('global_position/global', onGlobalPositionGlobalUpdate(copterId))
   copter.addListener('global_position/rel_alt', onRelativeAltitudeUpdate(copterId))
+  copter.addListener(`rtt_resp`, onRttRespUpdate(copterId));
+
   // copter commands
   const setVelPub = rosNode.advertise(`/${copterId}/setpoint_velocity/cmd_vel`, 'geometry_msgs/TwistStamped')
   cmdVelSub.subscribe(`/${copterId}/cmd_vel`)
@@ -294,6 +307,9 @@ const connetToCopter = (copterId) => {
   videoRoomSub.subscribe(`/${copterId}/video_room`)
   videoRoomSub.on('message', onVideoRoomCmd(copterId))
 
+  // rtt test
+  rttTestSub.subscribe(`/${copterId}/rtt_test`)
+  rttTestSub.on('message', onRttTestCmd(copterId))
 
   //goe fence
   geoFenceSub.subscribe(`/${copterId}/fence`)

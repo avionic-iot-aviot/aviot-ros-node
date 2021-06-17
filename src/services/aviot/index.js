@@ -55,6 +55,7 @@ class Copter {
   stopStreamingPub;
   startVideoRoomPub;
   stopVideoRoomPub;
+  rttTestPub;
   takeoffClient;
   setFenceClient;
   delFenceClient;
@@ -91,6 +92,7 @@ class Copter {
     rosnode.subscribe(`/${copterId}/global_position/global`, sensors_msgs.msg.NavSatFix, this.emit('global_position/global'), options);
     rosnode.subscribe(`/${copterId}/global_position/local`, nav_msgs.msg.Odometry,  this.emit('global_position/local'), options);
     rosnode.subscribe(`/${copterId}/global_position/rel_alt`, std_msgs.msg.Float64,  this.emit('global_position/rel_alt'), options);
+    rosnode.subscribe(`/${copterId}/rtt_resp`, 'std_msgs/String',  this.emit('rtt_resp'), options);
     
     // copter commands
     this.setVelPub = rosnode.advertise(`/${copterId}/setpoint_velocity/cmd_vel`, 'geometry_msgs/TwistStamped')
@@ -102,6 +104,10 @@ class Copter {
     // video room
     this.startVideoRoomPub = rosnode.advertise(`/${copterId}/start_video_room`, 'std_msgs/String')
     this.stopVideoRoomPub = rosnode.advertise(`/${copterId}/stop_video_room`, 'std_msgs/String')
+
+    // rtt test
+    this.rttTestPub = rosnode.advertise(`/${copterId}/rtt_test`, 'std_msgs/String')
+
     return true
   }
 
@@ -220,6 +226,13 @@ class Copter {
       data: JSON.stringify({ janus_feed_id: this.streamingFeed })
     })
     this.streamingFeed = undefined
+  }
+
+  rttTest(){
+    this.rttTestPub.publish({
+      header: this.getHeader(),
+      data: ""
+    })
   }
 
   /**
