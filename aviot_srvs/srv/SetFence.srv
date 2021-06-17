@@ -1,0 +1,18 @@
+# see enum MAV_FRAME
+uint8 frame
+uint8 FRAME_GLOBAL = 0
+uint8 FRAME_LOCAL_NED = 1
+uint8 FRAME_LOCAL_ENU = 4
+uint8 FRAME_GLOBAL_INT = 5
+uint8 FRAME_LOCAL_OFFSET_NED = 7
+
+uint8 mode
+uint8 MODE_DENY = 0
+uint8 MODE_ALLOW = 1
+
+geometry_msgs/Point[] points
+---
+int32 polygon_id
+int32 E_INVALID_POLYGON = -1
+int32 E_INVALID_MODE = -2
+int32 E_INVALID_FRAME = -3

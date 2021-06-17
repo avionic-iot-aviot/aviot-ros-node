@@ -1,0 +1,16 @@
+module.exports = {
+  BoundingBox: require('./BoundingBox.js'),
+  GeoPath: require('./GeoPath.js'),
+  GeoPoint: require('./GeoPoint.js'),
+  GeoPointStamped: require('./GeoPointStamped.js'),
+  GeoPose: require('./GeoPose.js'),
+  GeoPoseStamped: require('./GeoPoseStamped.js'),
+  GeographicMap: require('./GeographicMap.js'),
+  GeographicMapChanges: require('./GeographicMapChanges.js'),
+  KeyValue: require('./KeyValue.js'),
+  MapFeature: require('./MapFeature.js'),
+  RouteNetwork: require('./RouteNetwork.js'),
+  RoutePath: require('./RoutePath.js'),
+  RouteSegment: require('./RouteSegment.js'),
+  WayPoint: require('./WayPoint.js'),
+};
