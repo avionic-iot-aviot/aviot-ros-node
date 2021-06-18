@@ -112,7 +112,7 @@ class Copter {
   }
 
   emit = (event) => (data) => {
-    this.logger.debug(`event: ${event}, data:${JSON.stringify(data, null, 2)}`)
+    //this.logger.debug(`event: ${event}, data:${JSON.stringify(data, null, 2)}`)
     this.eventEmitter.emit(event, data)
   }
 

@@ -239,7 +239,7 @@ const onGeoFence = (copterId) => async (topic, message) => {
   } else if ( action === 'delete'){
     // data: { fenceId }
     let { fenceId } = data
-    res = await copter.delFence(fenceId)
+    res = await copter.deleteFence(fenceId)
 
   } else if (action === 'reset'){
     res = await copter.resetFence()
