@@ -199,7 +199,7 @@ class Copter {
     if(!this.videoroom){
       return
     }
-    stopVideoRoomPub.publish({
+    this.stopVideoRoomPub.publish({
       header: getHeader(),
       data: JSON.stringify({videoroom_name: this.videoroom})
     })
@@ -210,7 +210,7 @@ class Copter {
 
     this.streamingFeed = data.janus_feed_id
     this.logger.debug(`Staring streaming - feed id: ${this.streamingFeed}`,)
-    startStreamingPub.publish({
+    this.startStreamingPub.publish({
       header: getHeader(),
       data: JSON.stringify(res.data)
     })
@@ -221,7 +221,7 @@ class Copter {
       return
     }
     this.logger.debug(`Stopping streaming - feed id: ${this.streamingFeed}`,)
-    stopStreamingPub.publish({
+    this.stopStreamingPub.publish({
       header: getHeader(),
       data: JSON.stringify({ janus_feed_id: this.streamingFeed })
     })
