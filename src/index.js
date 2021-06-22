@@ -213,11 +213,11 @@ const onVideoRoomCmd = (copterId) => async (topic, message) => {
 
   if(action === 'start'){
     let { data } = await createVideoRoom(copterId)
-    await copter.startStreaming(data)
+    await copter.startVideoRoom(data)
     emitter.to(`copter_${copterId}`).emit(`/${copterId}/video_room`, { ...data, action })
     
   } else if (action === 'stop') {
-    await copter.stopStreaming()
+    await copter.stopVideoRoom()
     emitter.to(`copter_${copterId}`).emit(`/${copterId}/video_room`, { action: 'stop' })
   
   } else {
