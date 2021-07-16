@@ -41,11 +41,19 @@ const nodeInfo = {
 
 redis.on('connect', async function(){
   logger.debug(`Connecting to redis with instance id: ${nodeId}`);
+  
+  // set nodecount to 1 (single instance mode)
   await redis.incr(NODE_COUNT_KEY)
+  await redis.set(NODE_COUNT_KEY, 1)
+  
   let nodes = await redis.get(NODES_INFO_KEY).then(n => n ? JSON.parse(n) : [])
   
   logger.debug(`Online nodes: ${JSON.stringify(nodes, null, 2)}`);
-  nodes = nodes.concat([nodeInfo])
+  
+  
+  // overwrite nodes (single instance mode)
+  //nodes = nodes.concat([nodeInfo])
+  nodes = [ nodeInfo ]
 
   await redis.set(NODES_INFO_KEY, JSON.stringify(nodes))
   logger.debug(`Connected to redis with instance id: ${nodeId}`)
