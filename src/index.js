@@ -10,10 +10,10 @@ const Promise = require('bluebird')
 const Redis = require('ioredis')
 const uuidv1 = require('uuid/v1');
 
-// configure main publisher subscriber
-const redis = new Redis(config.redis)
-const sub = new Redis(config.redis)
-const pub = new Redis(config.redis)
+// main publisher subscriber
+let redis
+let sub
+let pub
 
 // redis key names
 const NODE_COUNT_KEY = 'rosListeners'
@@ -38,8 +38,7 @@ const nodeInfo = {
   copters: []
 }
 
-
-redis.on('connect', async function(){
+const onRedisConnect = async () => {
   logger.debug(`Connecting to redis with instance id: ${nodeId}`);
   
   // set nodecount to 1 (single instance mode)
@@ -50,7 +49,26 @@ redis.on('connect', async function(){
   
   logger.debug(`Online nodes: ${JSON.stringify(nodes, null, 2)}`);
   
-  
+
+  // (single instance mode)
+  // If there is a node in the nodes list, it must be a previous
+  // crashed instance of rosnodejs.
+  // Then we have to retrieve the copter list and connect
+  // to each copter of the list.
+  if (nodes.length>0) {
+    logger.debug(`Found a node of a previous instance of rosnodejs: ${nodes[0].uuid}`)
+    for (const copterId of nodes[0].copters) {
+      // connecting to copter
+      logger.debug(`Connecting to copter: ${copterId}`)
+      let res = await connetToCopter(copterId)
+      if(!res)
+        logger.error(`Unable to connect to copter with id: ${copterId}`)
+      else
+        nodeInfo.copters.push(copterId)
+    }
+  }
+
+
   // overwrite nodes (single instance mode)
   //nodes = nodes.concat([nodeInfo])
   nodes = [ nodeInfo ]
@@ -59,7 +77,7 @@ redis.on('connect', async function(){
   logger.debug(`Connected to redis with instance id: ${nodeId}`)
   sub.subscribe('copters', 'keepalive')
   
-})
+}
 
 const cleanup = async() => {
 
@@ -335,6 +353,13 @@ signals.forEach(function(sig){process.on(sig, cleanup)});
   // init ros
   rosNode = await rosnodejs.initNode(`/${nodeId.replace(/-/g, '_')}`, {})
   
+  // configure main publisher subscriber
+  redis = new Redis(config.redis)
+  sub = new Redis(config.redis)
+  pub = new Redis(config.redis)
+
+  redis.on('connect', onRedisConnect)
+
   // subscribe to redis
   sub.on('message', onRedisMessage)
 })()
