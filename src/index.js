@@ -275,13 +275,23 @@ const onGeoFence = (copterId) => async (topic, message) => {
 }
 
 const onRttTestCmd = (copterId) => (topic, message) => {
-  logger.debug('rtt_test: '+Date.now())
+  let data = JSON.parse(message)
+  logger.debug(`rtt_test: ${data.frontendId} ${Date.now()}`)
   const copter = copters[copterId]
-  copter.rttTest()
+  copter.rttTest(data)
 }
-const onRttRespUpdate = (copterId) => (data) => {
-  logger.debug('rtt_resp: '+Date.now())
-  emitter.to(`copter_${copterId}`).emit(`/${copterId}/rtt_resp`, { })
+const onRttRespUpdate = (copterId) => (message) => {
+  let data;
+  try {
+    data = JSON.parse(message.data)
+  }
+  catch (error) {
+    logger.error('rtt_resp: Failed to parse payload.')
+  }
+  if (data) {
+    logger.debug(`rtt_resp: ${data.frontendId} ${Date.now()}`)
+    emitter.to(`copter_${copterId}`).emit(`/${copterId}/rtt_resp`, data)
+  }
 }
 
 

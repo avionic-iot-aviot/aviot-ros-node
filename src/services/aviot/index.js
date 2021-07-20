@@ -228,10 +228,10 @@ class Copter {
     this.streamingFeed = undefined
   }
 
-  rttTest(){
+  rttTest(data){
     this.rttTestPub.publish({
       header: this.getHeader(),
-      data: ""
+      data: JSON.stringify(data)
     })
   }
 
