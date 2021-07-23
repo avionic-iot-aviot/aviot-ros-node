@@ -1,3 +1,3 @@
 [submodule "src/services/rosnodejs"]
 	path = src/services/rosnodejs
-	url = git@github.com:RethinkRobotics-opensource/rosnodejs.git
+	url = https://github.com/RethinkRobotics-opensource/rosnodejs

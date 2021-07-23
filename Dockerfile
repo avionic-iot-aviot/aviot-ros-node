@@ -24,11 +24,13 @@ WORKDIR /usr/src/app
 COPY . .
 
 RUN git submodule init
+RUN git submodule update
 
-RUN cd src/services/rosnodejs
+WORKDIR /usr/src/app/src/services/rosnodejs
 RUN npm install
+RUN npm run compile
 
-RUN  cd ../../../ 
+WORKDIR /usr/src/app
 RUN npm install
 
 # If you are building your code for production
