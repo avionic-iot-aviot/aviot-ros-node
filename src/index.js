@@ -5,7 +5,7 @@ import {createVideoRoom, createVideoStream, deleteVideoRoom, deleteVideoStream} 
 import Copter from './services/aviot'
 
 import Logger from './services/log'
-const rosnodejs = require('rosnodejs');
+const rosnodejs = require('src/services/rosnodejs/dist');
 const Promise = require('bluebird')
 const Redis = require('ioredis')
 const uuidv1 = require('uuid/v1');
