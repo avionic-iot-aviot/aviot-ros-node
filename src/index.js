@@ -1,7 +1,7 @@
 import config from '../config'
 import Logger from './services/log'
 const uuidv1 = require('uuid/v1');
-const rosnodejs = require('rosnodejs');
+const rosnodejs = require('src/services/rosnodejs/dist');
 
 let nodeId = uuidv1();
 const logger = Logger.child({ service: `ros-node`, uuid: nodeId});
