@@ -156,7 +156,7 @@ class Copter {
     "seq": ++seq,
     "stamp": {
       "secs": Math.round(new Date().getTime() / 1000),
-      "nsecs": 562934408
+      "nsecs": process.hrtime()[1]
     },
     "frame_id": ""
   })

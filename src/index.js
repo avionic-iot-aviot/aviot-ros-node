@@ -327,7 +327,7 @@ const connetToCopter = (copterId) => {
   copter.addListener(`rtt_resp`, onRttRespUpdate(copterId));
 
   // copter commands
-  const setVelPub = rosNode.advertise(`/${copterId}/setpoint_velocity/cmd_vel`, 'geometry_msgs/TwistStamped')
+  const setVelPub = rosNode.advertise(`/${copterId}/setpoint_attitude/cmd_vel`, 'geometry_msgs/TwistStamped')
   cmdVelSub.subscribe(`/${copterId}/cmd_vel`)
   cmdVelSub.on('message', onCmdVelReceived(copterId, setVelPub))
 
