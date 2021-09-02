@@ -95,7 +95,7 @@ class Copter {
     rosnode.subscribe(`/${copterId}/rtt_resp`, 'std_msgs/String',  this.emit('rtt_resp'), options);
     
     // copter commands
-    this.setVelPub = rosnode.advertise(`/${copterId}/setpoint_velocity/cmd_vel`, 'geometry_msgs/TwistStamped')
+    this.setVelPub = rosnode.advertise(`/${copterId}/setpoint_attitude/cmd_vel`, 'geometry_msgs/TwistStamped')
     
     // streaming
     this.startStreamingPub = rosnode.advertise(`/${copterId}/start_video_streaming`, 'std_msgs/String')
