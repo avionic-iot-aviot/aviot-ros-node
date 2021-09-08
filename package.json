@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prod": "export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:/root/catkin_ws/devel && node index.js"
+    "prod": "export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:/root/catkin_ws/devel && node index.js",
+    "sub": "export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:/root/catkin_ws/devel && node subscriber.js",
+    "pub": "export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:/root/catkin_ws/devel && node publisher.js"
   },
   "author": "",
   "license": "ISC",
