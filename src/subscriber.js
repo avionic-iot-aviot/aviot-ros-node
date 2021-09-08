@@ -29,7 +29,7 @@ const logger = Logger.child({ service: `ros-node`, uuid: nodeId});
 
 
   // init ros
-  let rosNode = await rosnodejs.initNode(`/${config.ros.nodeId}`, {})
+  let rosNode = await rosnodejs.initNode(`/${config.ros.nodeId}_sub`, {})
 
 //   let testPub = rosNode.advertise(`/${config.ros.nodeId}`, 'std_msgs/String')
 
