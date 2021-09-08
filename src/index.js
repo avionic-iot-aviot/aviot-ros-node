@@ -42,7 +42,7 @@ const logger = Logger.child({ service: `ros-node`, uuid: nodeId});
     logger.debug(`sending message on /${config.ros.nodeId} - ${Date.now()}`)
     testPub.publish({
       header: getHeader(),
-      data: `${i}`
+      data: `${i++}`
     })
   }, 250);
 })()
