@@ -29,6 +29,7 @@ const logger = Logger.child({ service: `ros-node`, uuid: nodeId});
 
 
   // init ros
+  let i = 0;
   let rosNode = await rosnodejs.initNode(`/${config.ros.nodeId}`, {})
 
   let testPub = rosNode.advertise(`/${config.ros.nodeId}`, 'std_msgs/String')
@@ -41,7 +42,7 @@ const logger = Logger.child({ service: `ros-node`, uuid: nodeId});
     logger.debug(`sending message on /${config.ros.nodeId} - ${Date.now()}`)
     testPub.publish({
       header: getHeader(),
-      data: "test string"
+      data: `${i}`
     })
   }, 250);
 })()
