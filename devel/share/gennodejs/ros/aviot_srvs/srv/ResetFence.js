@@ -1,16 +1,16 @@
-//-----------------------------------------------------------
-// Auto-generated from package aviot_srvs.
-// !! Do not edit !!
-//-----------------------------------------------------------
+// Auto-generated. Do not edit!
+
+// (in-package aviot_srvs.srv)
+
 
 "use strict";
 
 const _serializer = _ros_msg_utils.Serialize;
 const _arraySerializer = _serializer.Array;
 const _deserializer = _ros_msg_utils.Deserialize;
-const _arrayDeserializer = _deserializer.Array
+const _arrayDeserializer = _deserializer.Array;
 const _finder = _ros_msg_utils.Find;
-const _getByteLength = _ros_msg_utils.getByteLength
+const _getByteLength = _ros_msg_utils.getByteLength;
 
 //-----------------------------------------------------------
 
@@ -23,7 +23,6 @@ class ResetFenceRequest {
       // initObj === null is a special case for deserialization where we don't initialize fields
     }
     else {
-      // check for this message's fields by key name - otherwise assign default values
     }
   }
 
@@ -33,9 +32,9 @@ class ResetFenceRequest {
   }
 
   static deserialize(buffer, bufferOffset=[0]) {
-    // Deserializes a message object of type ResetFenceRequest
-    let data = new ResetFenceRequest(null);
+    //deserializes a message object of type ResetFenceRequest
     let len;
+    let data = new ResetFenceRequest(null);
     return data;
   }
 
@@ -44,20 +43,20 @@ class ResetFenceRequest {
   }
 
   static datatype() {
-    // Returns string type for a aviot_srvs/ResetFenceRequest object
+    // Returns string type for a service object
     return 'aviot_srvs/ResetFenceRequest';
   }
 
   static md5sum() {
-    // Returns md5sum of message object
-    return 'd41d8cd98f00b204e9800998ecf8427e'
+    //Returns md5sum for a message object
+    return 'd41d8cd98f00b204e9800998ecf8427e';
   }
 
   static messageDefinition() {
     // Returns full string definition for message
     return `
     
-`;
+    `;
   }
 
   static Resolve(msg) {
@@ -67,10 +66,9 @@ class ResetFenceRequest {
     }
     const resolved = new ResetFenceRequest(null);
     return resolved;
-  }
-}
+    }
+};
 
-//-----------------------------------------------------------
 class ResetFenceResponse {
   constructor(initObj={}) {
     if (initObj === null) {
@@ -78,14 +76,12 @@ class ResetFenceResponse {
       this.done = null;
     }
     else {
-      // check for this message's fields by key name - otherwise assign default values
       if (initObj.hasOwnProperty('done')) {
-        this.done = initObj.done;
+        this.done = initObj.done
       }
       else {
         this.done = 0;
       }
-
     }
   }
 
@@ -93,17 +89,15 @@ class ResetFenceResponse {
     // Serializes a message object of type ResetFenceResponse
     // Serialize message field [done]
     bufferOffset = _serializer.uint8(obj.done, buffer, bufferOffset);
-
     return bufferOffset;
   }
 
   static deserialize(buffer, bufferOffset=[0]) {
-    // Deserializes a message object of type ResetFenceResponse
-    let data = new ResetFenceResponse(null);
+    //deserializes a message object of type ResetFenceResponse
     let len;
+    let data = new ResetFenceResponse(null);
     // Deserialize message field [done]
     data.done = _deserializer.uint8(buffer, bufferOffset);
-
     return data;
   }
 
@@ -112,20 +106,22 @@ class ResetFenceResponse {
   }
 
   static datatype() {
-    // Returns string type for a aviot_srvs/ResetFenceResponse object
+    // Returns string type for a service object
     return 'aviot_srvs/ResetFenceResponse';
   }
 
   static md5sum() {
-    // Returns md5sum of message object
-    return 'f0fad9ccd7b64cd66ec986070ce0fd3f'
+    //Returns md5sum for a message object
+    return 'f0fad9ccd7b64cd66ec986070ce0fd3f';
   }
 
   static messageDefinition() {
     // Returns full string definition for message
     return `
     uint8 done
-`;
+    
+    
+    `;
   }
 
   static Resolve(msg) {
@@ -138,18 +134,16 @@ class ResetFenceResponse {
       resolved.done = msg.done;
     }
     else {
-      resolved.done = 0;
+      resolved.done = 0
     }
 
     return resolved;
-  }
-}
+    }
+};
 
-//-----------------------------------------------------------
 module.exports = {
   Request: ResetFenceRequest,
   Response: ResetFenceResponse,
   md5sum() { return 'f0fad9ccd7b64cd66ec986070ce0fd3f'; },
   datatype() { return 'aviot_srvs/ResetFence'; }
 };
-

@@ -1,16 +1,16 @@
-//-----------------------------------------------------------
-// Auto-generated from package aviot_srvs.
-// !! Do not edit !!
-//-----------------------------------------------------------
+// Auto-generated. Do not edit!
+
+// (in-package aviot_srvs.srv)
+
 
 "use strict";
 
 const _serializer = _ros_msg_utils.Serialize;
 const _arraySerializer = _serializer.Array;
 const _deserializer = _ros_msg_utils.Deserialize;
-const _arrayDeserializer = _deserializer.Array
+const _arrayDeserializer = _deserializer.Array;
 const _finder = _ros_msg_utils.Find;
-const _getByteLength = _ros_msg_utils.getByteLength
+const _getByteLength = _ros_msg_utils.getByteLength;
 
 //-----------------------------------------------------------
 
@@ -24,14 +24,12 @@ class DeleteFenceRequest {
       this.polygon_id = null;
     }
     else {
-      // check for this message's fields by key name - otherwise assign default values
       if (initObj.hasOwnProperty('polygon_id')) {
-        this.polygon_id = initObj.polygon_id;
+        this.polygon_id = initObj.polygon_id
       }
       else {
         this.polygon_id = 0;
       }
-
     }
   }
 
@@ -39,17 +37,15 @@ class DeleteFenceRequest {
     // Serializes a message object of type DeleteFenceRequest
     // Serialize message field [polygon_id]
     bufferOffset = _serializer.int32(obj.polygon_id, buffer, bufferOffset);
-
     return bufferOffset;
   }
 
   static deserialize(buffer, bufferOffset=[0]) {
-    // Deserializes a message object of type DeleteFenceRequest
-    let data = new DeleteFenceRequest(null);
+    //deserializes a message object of type DeleteFenceRequest
     let len;
+    let data = new DeleteFenceRequest(null);
     // Deserialize message field [polygon_id]
     data.polygon_id = _deserializer.int32(buffer, bufferOffset);
-
     return data;
   }
 
@@ -58,20 +54,21 @@ class DeleteFenceRequest {
   }
 
   static datatype() {
-    // Returns string type for a aviot_srvs/DeleteFenceRequest object
+    // Returns string type for a service object
     return 'aviot_srvs/DeleteFenceRequest';
   }
 
   static md5sum() {
-    // Returns md5sum of message object
-    return '97f1028fa479966162ae92d2c0f9e429'
+    //Returns md5sum for a message object
+    return '97f1028fa479966162ae92d2c0f9e429';
   }
 
   static messageDefinition() {
     // Returns full string definition for message
     return `
     int32 polygon_id
-`;
+    
+    `;
   }
 
   static Resolve(msg) {
@@ -84,14 +81,13 @@ class DeleteFenceRequest {
       resolved.polygon_id = msg.polygon_id;
     }
     else {
-      resolved.polygon_id = 0;
+      resolved.polygon_id = 0
     }
 
     return resolved;
-  }
-}
+    }
+};
 
-//-----------------------------------------------------------
 class DeleteFenceResponse {
   constructor(initObj={}) {
     if (initObj === null) {
@@ -99,14 +95,12 @@ class DeleteFenceResponse {
       this.done = null;
     }
     else {
-      // check for this message's fields by key name - otherwise assign default values
       if (initObj.hasOwnProperty('done')) {
-        this.done = initObj.done;
+        this.done = initObj.done
       }
       else {
         this.done = 0;
       }
-
     }
   }
 
@@ -114,17 +108,15 @@ class DeleteFenceResponse {
     // Serializes a message object of type DeleteFenceResponse
     // Serialize message field [done]
     bufferOffset = _serializer.uint8(obj.done, buffer, bufferOffset);
-
     return bufferOffset;
   }
 
   static deserialize(buffer, bufferOffset=[0]) {
-    // Deserializes a message object of type DeleteFenceResponse
-    let data = new DeleteFenceResponse(null);
+    //deserializes a message object of type DeleteFenceResponse
     let len;
+    let data = new DeleteFenceResponse(null);
     // Deserialize message field [done]
     data.done = _deserializer.uint8(buffer, bufferOffset);
-
     return data;
   }
 
@@ -133,20 +125,22 @@ class DeleteFenceResponse {
   }
 
   static datatype() {
-    // Returns string type for a aviot_srvs/DeleteFenceResponse object
+    // Returns string type for a service object
     return 'aviot_srvs/DeleteFenceResponse';
   }
 
   static md5sum() {
-    // Returns md5sum of message object
-    return 'f0fad9ccd7b64cd66ec986070ce0fd3f'
+    //Returns md5sum for a message object
+    return 'f0fad9ccd7b64cd66ec986070ce0fd3f';
   }
 
   static messageDefinition() {
     // Returns full string definition for message
     return `
     uint8 done
-`;
+    
+    
+    `;
   }
 
   static Resolve(msg) {
@@ -159,18 +153,16 @@ class DeleteFenceResponse {
       resolved.done = msg.done;
     }
     else {
-      resolved.done = 0;
+      resolved.done = 0
     }
 
     return resolved;
-  }
-}
+    }
+};
 
-//-----------------------------------------------------------
 module.exports = {
   Request: DeleteFenceRequest,
   Response: DeleteFenceResponse,
   md5sum() { return '1b7306db77eae79388b7799e8c563252'; },
   datatype() { return 'aviot_srvs/DeleteFence'; }
 };
-
