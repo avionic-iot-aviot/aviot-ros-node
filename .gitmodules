@@ -1,3 +1,6 @@
+[submodule "src/services/--force"]
+	path = src/services/--force
+	url = https://github.com/avionic-iot-aviot/rosnodejs
 [submodule "src/services/rosnodejs"]
 	path = src/services/rosnodejs
 	url = https://github.com/avionic-iot-aviot/rosnodejs
