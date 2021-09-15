@@ -243,11 +243,12 @@ class Copter {
    * @param {Array} points
    * @param {number} points.x 
    */
-  setFence(mode, points){
+  setFence(mode, points, frame){
     this.logger.debug(`Setting fence - mode: ${mode}, Geometry: ${JSON.stringify(points, null, 2)}`)
     return this.setFenceClient.call({
       mode: (mode === 'ALLOW' ? MODE_ALLOW : MODE_DENY) | FRAME_GLOBAL,
-      points
+      points,
+      frame
     })
   }
 
@@ -261,10 +262,11 @@ class Copter {
     this.logger.debug(`Reset fence`)
     return this.resetFenceClient.call({})
   }
-  getFence(fenceId){
+  getFence(fenceId, frame){
     this.logger.debug(`Getting fence - fence id: ${fenceId}`)
     return this.getFenceClient.call({
-      polygon_id: fenceId
+      polygon_id: fenceId,
+      frame
     })
   }
   listFence(){

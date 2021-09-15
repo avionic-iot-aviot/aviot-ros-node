@@ -40,7 +40,7 @@ template<>
 struct MD5Sum< ::aviot_srvs::GetFence > {
   static const char* value()
   {
-    return "466f87568982eee090da5c5e363b5143";
+    return "2d3dec2eb2d34eb78d8f9021c9e0cb66";
   }
 
   static const char* value(const ::aviot_srvs::GetFence&) { return value(); }

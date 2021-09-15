@@ -1,8 +1,8 @@
 (cl:in-package aviot_srvs-srv)
-(cl:export '(POLYGON_ID-VAL
-          POLYGON_ID
-          FRAME-VAL
+(cl:export '(FRAME-VAL
           FRAME
+          POLYGON_ID-VAL
+          POLYGON_ID
           MODE-VAL
           MODE
           POINTS-VAL

@@ -22,9 +22,16 @@ class GetFenceRequest {
   constructor(initObj={}) {
     if (initObj === null) {
       // initObj === null is a special case for deserialization where we don't initialize fields
+      this.frame = null;
       this.polygon_id = null;
     }
     else {
+      if (initObj.hasOwnProperty('frame')) {
+        this.frame = initObj.frame
+      }
+      else {
+        this.frame = 0;
+      }
       if (initObj.hasOwnProperty('polygon_id')) {
         this.polygon_id = initObj.polygon_id
       }
@@ -36,6 +43,8 @@ class GetFenceRequest {
 
   static serialize(obj, buffer, bufferOffset) {
     // Serializes a message object of type GetFenceRequest
+    // Serialize message field [frame]
+    bufferOffset = _serializer.uint8(obj.frame, buffer, bufferOffset);
     // Serialize message field [polygon_id]
     bufferOffset = _serializer.int32(obj.polygon_id, buffer, bufferOffset);
     return bufferOffset;
@@ -45,13 +54,15 @@ class GetFenceRequest {
     //deserializes a message object of type GetFenceRequest
     let len;
     let data = new GetFenceRequest(null);
+    // Deserialize message field [frame]
+    data.frame = _deserializer.uint8(buffer, bufferOffset);
     // Deserialize message field [polygon_id]
     data.polygon_id = _deserializer.int32(buffer, bufferOffset);
     return data;
   }
 
   static getMessageSize(object) {
-    return 4;
+    return 5;
   }
 
   static datatype() {
@@ -61,12 +72,18 @@ class GetFenceRequest {
 
   static md5sum() {
     //Returns md5sum for a message object
-    return '97f1028fa479966162ae92d2c0f9e429';
+    return '47655ecd027caeafcc9cd21438352a34';
   }
 
   static messageDefinition() {
     // Returns full string definition for message
     return `
+    uint8 frame
+    uint8 FRAME_GLOBAL = 0
+    uint8 FRAME_LOCAL_NED = 1
+    uint8 FRAME_LOCAL_ENU = 4
+    uint8 FRAME_GLOBAL_INT = 5
+    uint8 FRAME_LOCAL_OFFSET_NED = 7
     int32 polygon_id
     
     `;
@@ -78,6 +95,13 @@ class GetFenceRequest {
       msg = {};
     }
     const resolved = new GetFenceRequest(null);
+    if (msg.frame !== undefined) {
+      resolved.frame = msg.frame;
+    }
+    else {
+      resolved.frame = 0
+    }
+
     if (msg.polygon_id !== undefined) {
       resolved.polygon_id = msg.polygon_id;
     }
@@ -89,21 +113,23 @@ class GetFenceRequest {
     }
 };
 
+// Constants for message
+GetFenceRequest.Constants = {
+  FRAME_GLOBAL: 0,
+  FRAME_LOCAL_NED: 1,
+  FRAME_LOCAL_ENU: 4,
+  FRAME_GLOBAL_INT: 5,
+  FRAME_LOCAL_OFFSET_NED: 7,
+}
+
 class GetFenceResponse {
   constructor(initObj={}) {
     if (initObj === null) {
       // initObj === null is a special case for deserialization where we don't initialize fields
-      this.frame = null;
       this.mode = null;
       this.points = null;
     }
     else {
-      if (initObj.hasOwnProperty('frame')) {
-        this.frame = initObj.frame
-      }
-      else {
-        this.frame = 0;
-      }
       if (initObj.hasOwnProperty('mode')) {
         this.mode = initObj.mode
       }
@@ -121,8 +147,6 @@ class GetFenceResponse {
 
   static serialize(obj, buffer, bufferOffset) {
     // Serializes a message object of type GetFenceResponse
-    // Serialize message field [frame]
-    bufferOffset = _serializer.uint8(obj.frame, buffer, bufferOffset);
     // Serialize message field [mode]
     bufferOffset = _serializer.uint8(obj.mode, buffer, bufferOffset);
     // Serialize message field [points]
@@ -138,8 +162,6 @@ class GetFenceResponse {
     //deserializes a message object of type GetFenceResponse
     let len;
     let data = new GetFenceResponse(null);
-    // Deserialize message field [frame]
-    data.frame = _deserializer.uint8(buffer, bufferOffset);
     // Deserialize message field [mode]
     data.mode = _deserializer.uint8(buffer, bufferOffset);
     // Deserialize message field [points]
@@ -155,7 +177,7 @@ class GetFenceResponse {
   static getMessageSize(object) {
     let length = 0;
     length += 24 * object.points.length;
-    return length + 6;
+    return length + 5;
   }
 
   static datatype() {
@@ -165,19 +187,12 @@ class GetFenceResponse {
 
   static md5sum() {
     //Returns md5sum for a message object
-    return 'a6b013422cbf99acfc1ef2f7fe5aa28c';
+    return 'b2f2beab1250db1a02b47fb1676baf42';
   }
 
   static messageDefinition() {
     // Returns full string definition for message
     return `
-    uint8 frame
-    uint8 FRAME_GLOBAL = 0
-    uint8 FRAME_LOCAL_NED = 1
-    uint8 FRAME_LOCAL_ENU = 4
-    uint8 FRAME_GLOBAL_INT = 5
-    uint8 FRAME_LOCAL_OFFSET_NED = 7
-    
     uint8 mode
     uint8 MODE_DENY = 0
     uint8 MODE_ALLOW = 1
@@ -200,13 +215,6 @@ class GetFenceResponse {
       msg = {};
     }
     const resolved = new GetFenceResponse(null);
-    if (msg.frame !== undefined) {
-      resolved.frame = msg.frame;
-    }
-    else {
-      resolved.frame = 0
-    }
-
     if (msg.mode !== undefined) {
       resolved.mode = msg.mode;
     }
@@ -230,11 +238,6 @@ class GetFenceResponse {
 
 // Constants for message
 GetFenceResponse.Constants = {
-  FRAME_GLOBAL: 0,
-  FRAME_LOCAL_NED: 1,
-  FRAME_LOCAL_ENU: 4,
-  FRAME_GLOBAL_INT: 5,
-  FRAME_LOCAL_OFFSET_NED: 7,
   MODE_DENY: 0,
   MODE_ALLOW: 1,
 }
@@ -242,6 +245,6 @@ GetFenceResponse.Constants = {
 module.exports = {
   Request: GetFenceRequest,
   Response: GetFenceResponse,
-  md5sum() { return '466f87568982eee090da5c5e363b5143'; },
+  md5sum() { return '2d3dec2eb2d34eb78d8f9021c9e0cb66'; },
   datatype() { return 'aviot_srvs/GetFence'; }
 };

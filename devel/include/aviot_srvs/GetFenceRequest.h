@@ -24,20 +24,32 @@ struct GetFenceRequest_
   typedef GetFenceRequest_<ContainerAllocator> Type;
 
   GetFenceRequest_()
-    : polygon_id(0)  {
+    : frame(0)
+    , polygon_id(0)  {
     }
   GetFenceRequest_(const ContainerAllocator& _alloc)
-    : polygon_id(0)  {
+    : frame(0)
+    , polygon_id(0)  {
   (void)_alloc;
     }
 
 
+
+   typedef uint8_t _frame_type;
+  _frame_type frame;
 
    typedef int32_t _polygon_id_type;
   _polygon_id_type polygon_id;
 
 
 
+  enum {
+    FRAME_GLOBAL = 0u,
+    FRAME_LOCAL_NED = 1u,
+    FRAME_LOCAL_ENU = 4u,
+    FRAME_GLOBAL_INT = 5u,
+    FRAME_LOCAL_OFFSET_NED = 7u,
+  };
 
 
   typedef boost::shared_ptr< ::aviot_srvs::GetFenceRequest_<ContainerAllocator> > Ptr;
@@ -51,6 +63,16 @@ typedef boost::shared_ptr< ::aviot_srvs::GetFenceRequest > GetFenceRequestPtr;
 typedef boost::shared_ptr< ::aviot_srvs::GetFenceRequest const> GetFenceRequestConstPtr;
 
 // constants requiring out of line definition
+
+   
+
+   
+
+   
+
+   
+
+   
 
 
 
@@ -114,12 +136,12 @@ struct MD5Sum< ::aviot_srvs::GetFenceRequest_<ContainerAllocator> >
 {
   static const char* value()
   {
-    return "97f1028fa479966162ae92d2c0f9e429";
+    return "47655ecd027caeafcc9cd21438352a34";
   }
 
   static const char* value(const ::aviot_srvs::GetFenceRequest_<ContainerAllocator>&) { return value(); }
-  static const uint64_t static_value1 = 0x97f1028fa4799661ULL;
-  static const uint64_t static_value2 = 0x62ae92d2c0f9e429ULL;
+  static const uint64_t static_value1 = 0x47655ecd027caeafULL;
+  static const uint64_t static_value2 = 0xcc9cd21438352a34ULL;
 };
 
 template<class ContainerAllocator>
@@ -138,7 +160,13 @@ struct Definition< ::aviot_srvs::GetFenceRequest_<ContainerAllocator> >
 {
   static const char* value()
   {
-    return "int32 polygon_id\n\
+    return "uint8 frame\n\
+uint8 FRAME_GLOBAL = 0\n\
+uint8 FRAME_LOCAL_NED = 1\n\
+uint8 FRAME_LOCAL_ENU = 4\n\
+uint8 FRAME_GLOBAL_INT = 5\n\
+uint8 FRAME_LOCAL_OFFSET_NED = 7\n\
+int32 polygon_id\n\
 ";
   }
 
@@ -157,6 +185,7 @@ namespace serialization
   {
     template<typename Stream, typename T> inline static void allInOne(Stream& stream, T m)
     {
+      stream.next(m.frame);
       stream.next(m.polygon_id);
     }
 
@@ -176,6 +205,8 @@ struct Printer< ::aviot_srvs::GetFenceRequest_<ContainerAllocator> >
 {
   template<typename Stream> static void stream(Stream& s, const std::string& indent, const ::aviot_srvs::GetFenceRequest_<ContainerAllocator>& v)
   {
+    s << indent << "frame: ";
+    Printer<uint8_t>::stream(s, indent + "  ", v.frame);
     s << indent << "polygon_id: ";
     Printer<int32_t>::stream(s, indent + "  ", v.polygon_id);
   }

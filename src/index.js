@@ -259,8 +259,8 @@ const onGeoFence = (copterId) => async (topic, message) => {
   
   if(action === 'set'){
     // data: { mode: 'ALLOW' | 'DENY', geometry: [{ x, y, z}]}
-    const { mode, points } = data
-    res = await copter.setFence(mode, points)
+    const { mode, points, frame } = data
+    res = await copter.setFence(mode, points, frame)
     
   } else if ( action === 'delete'){
     // data: { fenceId }
@@ -271,8 +271,8 @@ const onGeoFence = (copterId) => async (topic, message) => {
     res = await copter.resetFence()
   
   } else if ( action === 'get'){
-    let { fenceId } = data
-    res = await copter.getFence(fenceId)
+    let { fenceId, frame } = data
+    res = await copter.getFence(fenceId,frame)
 
   } else if (action === 'list'){
     res = await copter.listFence()

@@ -25,21 +25,16 @@ struct GetFenceResponse_
   typedef GetFenceResponse_<ContainerAllocator> Type;
 
   GetFenceResponse_()
-    : frame(0)
-    , mode(0)
+    : mode(0)
     , points()  {
     }
   GetFenceResponse_(const ContainerAllocator& _alloc)
-    : frame(0)
-    , mode(0)
+    : mode(0)
     , points(_alloc)  {
   (void)_alloc;
     }
 
 
-
-   typedef uint8_t _frame_type;
-  _frame_type frame;
 
    typedef uint8_t _mode_type;
   _mode_type mode;
@@ -50,11 +45,6 @@ struct GetFenceResponse_
 
 
   enum {
-    FRAME_GLOBAL = 0u,
-    FRAME_LOCAL_NED = 1u,
-    FRAME_LOCAL_ENU = 4u,
-    FRAME_GLOBAL_INT = 5u,
-    FRAME_LOCAL_OFFSET_NED = 7u,
     MODE_DENY = 0u,
     MODE_ALLOW = 1u,
   };
@@ -71,16 +61,6 @@ typedef boost::shared_ptr< ::aviot_srvs::GetFenceResponse > GetFenceResponsePtr;
 typedef boost::shared_ptr< ::aviot_srvs::GetFenceResponse const> GetFenceResponseConstPtr;
 
 // constants requiring out of line definition
-
-   
-
-   
-
-   
-
-   
-
-   
 
    
 
@@ -148,12 +128,12 @@ struct MD5Sum< ::aviot_srvs::GetFenceResponse_<ContainerAllocator> >
 {
   static const char* value()
   {
-    return "a6b013422cbf99acfc1ef2f7fe5aa28c";
+    return "b2f2beab1250db1a02b47fb1676baf42";
   }
 
   static const char* value(const ::aviot_srvs::GetFenceResponse_<ContainerAllocator>&) { return value(); }
-  static const uint64_t static_value1 = 0xa6b013422cbf99acULL;
-  static const uint64_t static_value2 = 0xfc1ef2f7fe5aa28cULL;
+  static const uint64_t static_value1 = 0xb2f2beab1250db1aULL;
+  static const uint64_t static_value2 = 0x02b47fb1676baf42ULL;
 };
 
 template<class ContainerAllocator>
@@ -172,14 +152,7 @@ struct Definition< ::aviot_srvs::GetFenceResponse_<ContainerAllocator> >
 {
   static const char* value()
   {
-    return "uint8 frame\n\
-uint8 FRAME_GLOBAL = 0\n\
-uint8 FRAME_LOCAL_NED = 1\n\
-uint8 FRAME_LOCAL_ENU = 4\n\
-uint8 FRAME_GLOBAL_INT = 5\n\
-uint8 FRAME_LOCAL_OFFSET_NED = 7\n\
-\n\
-uint8 mode\n\
+    return "uint8 mode\n\
 uint8 MODE_DENY = 0\n\
 uint8 MODE_ALLOW = 1\n\
 geometry_msgs/Point[] points\n\
@@ -209,7 +182,6 @@ namespace serialization
   {
     template<typename Stream, typename T> inline static void allInOne(Stream& stream, T m)
     {
-      stream.next(m.frame);
       stream.next(m.mode);
       stream.next(m.points);
     }
@@ -230,8 +202,6 @@ struct Printer< ::aviot_srvs::GetFenceResponse_<ContainerAllocator> >
 {
   template<typename Stream> static void stream(Stream& s, const std::string& indent, const ::aviot_srvs::GetFenceResponse_<ContainerAllocator>& v)
   {
-    s << indent << "frame: ";
-    Printer<uint8_t>::stream(s, indent + "  ", v.frame);
     s << indent << "mode: ";
     Printer<uint8_t>::stream(s, indent + "  ", v.mode);
     s << indent << "points[]" << std::endl;
