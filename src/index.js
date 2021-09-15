@@ -270,6 +270,13 @@ const onGeoFence = (copterId) => async (topic, message) => {
   } else if (action === 'reset'){
     res = await copter.resetFence()
   
+  } else if ( action === 'get'){
+    let { fenceId } = data
+    res = await copter.getFence(fenceId)
+
+  } else if (action === 'list'){
+    res = await copter.listFence()
+  
   }
   emitter.to(`copter_${copterId}`).emit(`/${copterId}/fence`, { action, data, res })
 }

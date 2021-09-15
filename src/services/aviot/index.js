@@ -86,6 +86,8 @@ class Copter {
     this.setFenceClient = rosnode.serviceClient(`/${copterId}/fence/set`, 'aviot_srvs/SetFence');
     this.delFenceClient = rosnode.serviceClient(`/${copterId}/fence/delete`, 'aviot_srvs/DeleteFence');
     this.resetFenceClient = rosnode.serviceClient(`/${copterId}/fence/reset`, 'aviot_srvs/ResetFence')
+    this.getFenceClient = rosnode.serviceClient(`/${copterId}/fence/get`, 'aviot_srvs/GetFence');
+    this.listFenceClient = rosnode.serviceClient(`/${copterId}/fence/list`, 'aviot_srvs/ListFence');
     // copter information
     rosnode.subscribe(`/${copterId}/battery`, sensors_msgs.msg.BatteryState, this.emit('battery'), options);
     rosnode.subscribe(`/${copterId}/state`, mavros_msgs.msg.State, this.emit('state'));
@@ -258,6 +260,16 @@ class Copter {
   resetFence(){
     this.logger.debug(`Reset fence`)
     return this.resetFenceClient.call({})
+  }
+  getFence(fenceId){
+    this.logger.debug(`Getting fence - fence id: ${fenceId}`)
+    return this.getFenceClient.call({
+      polygon_id: fenceId
+    })
+  }
+  listFence(){
+    this.logger.debug(`List fence`)
+    return this.listFenceClient.call({})
   }
 }
 
