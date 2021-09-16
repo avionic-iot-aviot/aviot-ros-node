@@ -73,6 +73,9 @@ class Copter {
       dgramSize: 1500,
       udpFirst: true
     }
+    let options2 = {
+      transports: ["TCPROS"]
+    }
     this.eventEmitter = new events.EventEmitter();
 
     this.rosnode = rosnode
@@ -94,7 +97,7 @@ class Copter {
     rosnode.subscribe(`/${copterId}/global_position/global`, sensors_msgs.msg.NavSatFix, this.emit('global_position/global'), options);
     rosnode.subscribe(`/${copterId}/global_position/local`, nav_msgs.msg.Odometry,  this.emit('global_position/local'), options);
     rosnode.subscribe(`/${copterId}/global_position/rel_alt`, std_msgs.msg.Float64,  this.emit('global_position/rel_alt'), options);
-    rosnode.subscribe(`/${copterId}/rtt_resp`, 'std_msgs/String',  this.emit('rtt_resp'), options);
+    rosnode.subscribe(`/${copterId}/rtt_resp`, 'std_msgs/String',  this.emit('rtt_resp'), options2);
     
     // copter commands
     this.setVelPub = rosnode.advertise(`/${copterId}/setpoint_attitude/cmd_vel`, 'geometry_msgs/TwistStamped')
