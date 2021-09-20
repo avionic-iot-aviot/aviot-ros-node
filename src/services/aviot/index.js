@@ -91,12 +91,14 @@ class Copter {
     this.resetFenceClient = rosnode.serviceClient(`/${copterId}/fence/reset`, 'aviot_srvs/ResetFence')
     this.getFenceClient = rosnode.serviceClient(`/${copterId}/fence/get`, 'aviot_srvs/GetFence');
     this.listFenceClient = rosnode.serviceClient(`/${copterId}/fence/list`, 'aviot_srvs/ListFence');
+    this.streamRateClient = rosnode.serviceClient(`/${copterId}/set_stream_rate`, 'mavros_msgs/StreamRate');
     // copter information
     rosnode.subscribe(`/${copterId}/battery`, sensors_msgs.msg.BatteryState, this.emit('battery'), options);
     rosnode.subscribe(`/${copterId}/state`, mavros_msgs.msg.State, this.emit('state'));
     rosnode.subscribe(`/${copterId}/global_position/global`, sensors_msgs.msg.NavSatFix, this.emit('global_position/global'), options);
     rosnode.subscribe(`/${copterId}/global_position/local`, nav_msgs.msg.Odometry,  this.emit('global_position/local'), options);
     rosnode.subscribe(`/${copterId}/global_position/rel_alt`, std_msgs.msg.Float64,  this.emit('global_position/rel_alt'), options);
+    rosnode.subscribe(`/${copterId}/global_position/compass_hdg`, std_msgs.msg.Float64,  this.emit('global_position/compass_hdg'), options);
     rosnode.subscribe(`/${copterId}/rtt_resp`, 'std_msgs/String',  this.emit('rtt_resp'), options2);
     
     // copter commands
@@ -231,6 +233,22 @@ class Copter {
       data: JSON.stringify({ janus_feed_id: this.streamingFeed })
     })
     this.streamingFeed = undefined
+  }
+
+  mode(base_mode, custom_mode){
+    this.logger.debug(`Setting mode`)
+    return this.modeClient.call({
+      base_mode,
+      custom_mode
+    })
+  }
+  streamRate(stream_id, message_rate, on_off){
+    this.logger.debug(`Setting stream rate`)
+    return this.streamRateClient.call({
+      stream_id,
+      message_rate,
+      on_off
+    })
   }
 
   rttTest(data){

@@ -173,6 +173,10 @@ const onRelativeAltitudeUpdate = (copterId) => ({data}) => {
   emitter.to(`copter_${copterId}`).emit(`/${copterId}/global_position/rel_alt`, data)
   //debugMessage(`/${copterId}/global_position/rel_alt`, data)
 }
+const onCompassUpdate = (copterId) => ({data}) => {
+  emitter.to(`copter_${copterId}`).emit(`/${copterId}/global_position/compass_hdg`, data)
+  //debugMessage(`/${copterId}/global_position/compass_hdg`, data)
+}
 const onStateUpdate = (copterId) => ({ connected, armed, guided, mode, system_status }) => {
   emitter.to(`copter_${copterId}`).emit(`/${copterId}/state`, { connected, armed, guided, mode, system_status })
 }
@@ -251,6 +255,16 @@ const onVideoRoomCmd = (copterId) => async (topic, message) => {
   }
 }
 
+const onModeCmd = (copterId) => async (topic, message) => {
+  let { data } = JSON.parse(message)
+  copters[copterId].mode(data.base_mode, data.custom_mode);
+
+}
+const onStreamRateCmd = (copterId) => async (topic, message) => {
+  let { data } = JSON.parse(message)
+  copters[copterId].streamRate(data.stream_id, data.message_rate, data.on_off);
+}
+
 
 const onGeoFence = (copterId) => async (topic, message) => {
   const { action, data } = JSON.parse(message)
@@ -319,6 +333,8 @@ const connetToCopter = (copterId) => {
   let copterSub = new Redis(config.redis)
   let streamingSub = new Redis(config.redis)
   let videoRoomSub = new Redis(config.redis)
+  let modeSub = new Redis(config.redis)
+  let streamRateSub = new Redis(config.redis)
   let geoFenceSub = new Redis(config.redis)
   let rttTestSub = new Redis(config.redis)
 
@@ -331,6 +347,7 @@ const connetToCopter = (copterId) => {
   copter.addListener('battery', onBatteryUpdate(copterId))
   copter.addListener('global_position/global', onGlobalPositionGlobalUpdate(copterId))
   copter.addListener('global_position/rel_alt', onRelativeAltitudeUpdate(copterId))
+  copter.addListener('global_position/compass_hdg', onCompassUpdate(copterId))
   copter.addListener(`rtt_resp`, onRttRespUpdate(copterId));
 
   // copter commands
@@ -349,6 +366,14 @@ const connetToCopter = (copterId) => {
   // video room
   videoRoomSub.subscribe(`/${copterId}/video_room`)
   videoRoomSub.on('message', onVideoRoomCmd(copterId))
+
+  // set mode
+  modeSub.subscribe(`/${copterId}/mode`)
+  modeSub.on('message', onModeCmd(copterId))
+
+  // set stream rate
+  streamRateSub.subscribe(`/${copterId}/stream_rate`)
+  streamRateSub.on('message', onStreamRateCmd(copterId))
 
   // rtt test
   rttTestSub.subscribe(`/${copterId}/rtt_test`)
