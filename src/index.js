@@ -257,12 +257,12 @@ const onVideoRoomCmd = (copterId) => async (topic, message) => {
 
 const onModeCmd = (copterId) => async (topic, message) => {
   let { data } = JSON.parse(message)
-  copters[copterId].mode(data.base_mode, data.custom_mode);
+  copters[copterId].setMode(data.base_mode, data.custom_mode);
 
 }
 const onStreamRateCmd = (copterId) => async (topic, message) => {
   let { data } = JSON.parse(message)
-  copters[copterId].streamRate(data.stream_id, data.message_rate, data.on_off);
+  copters[copterId].setStreamRate(data.stream_id, data.message_rate, data.on_off);
 }
 
 

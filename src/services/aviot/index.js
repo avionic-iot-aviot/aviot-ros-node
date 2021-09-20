@@ -235,14 +235,14 @@ class Copter {
     this.streamingFeed = undefined
   }
 
-  mode(base_mode, custom_mode){
+  setMode(base_mode, custom_mode){
     this.logger.debug(`Setting mode`)
     return this.modeClient.call({
       base_mode,
       custom_mode
     })
   }
-  streamRate(stream_id, message_rate, on_off){
+  setStreamRate(stream_id, message_rate, on_off){
     this.logger.debug(`Setting stream rate`)
     return this.streamRateClient.call({
       stream_id,
