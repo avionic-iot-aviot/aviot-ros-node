@@ -168,6 +168,9 @@ const onGlobalPositionGlobalUpdate = (copterId) => (data) => {
 const onMissionWaypointsUpdate = (copterId) => (data) => {
   emitter.to(`copter_${copterId}`).emit(`/${copterId}/mission/waypoints`, data)
 }
+const onMissionWaypointsRealUpdate = (copterId) => (data) => {
+  emitter.to(`copter_${copterId}`).emit(`/${copterId}/mission/waypoints_real`, data)
+}
 const onGlobalPositionLocalUpdate = (copterId) => (data) => {
   emitter.to(`copter_${copterId}`).emit(`/${copterId}/global_position/local`, data)
   //debugMessage(`/${copterId}/global_position/local`, data)
@@ -371,6 +374,7 @@ const connetToCopter = (copterId) => {
   copter.addListener('global_position/rel_alt', onRelativeAltitudeUpdate(copterId))
   copter.addListener('global_position/compass_hdg', onCompassUpdate(copterId))
   copter.addListener('mission/waypoints', onMissionWaypointsUpdate(copterId))
+  copter.addListener('mission/waypoints_real', onMissionWaypointsRealUpdate(copterId))
   copter.addListener(`rtt_resp`, onRttRespUpdate(copterId));
 
   // copter commands

@@ -107,6 +107,7 @@ class Copter {
     rosnode.subscribe(`/${copterId}/global_position/rel_alt`, std_msgs.msg.Float64,  this.emit('global_position/rel_alt'), options);
     rosnode.subscribe(`/${copterId}/global_position/compass_hdg`, std_msgs.msg.Float64,  this.emit('global_position/compass_hdg'), options);
     rosnode.subscribe(`/${copterId}/mission/waypoints`, mavros_msgs.msg.WaypointList,  this.emit('mission/waypoints'), options);
+    rosnode.subscribe(`/${copterId}/mission/waypoints_real`, mavros_msgs.msg.WaypointList,  this.emit('mission/waypoints_real'), options);
     rosnode.subscribe(`/${copterId}/rtt_resp`, 'std_msgs/String',  this.emit('rtt_resp'), options2);
     
     // copter commands
