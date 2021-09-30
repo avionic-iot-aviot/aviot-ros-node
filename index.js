@@ -1,3 +1,4 @@
+require('longjohn');
 require('babel-core/register')
 //const rosnodejs = require('rosnodejs');
 //rosnodejs.loadAllPackages();

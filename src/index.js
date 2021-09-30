@@ -165,6 +165,9 @@ const onGlobalPositionGlobalUpdate = (copterId) => (data) => {
   emitter.to(`copter_${copterId}`).emit(`/${copterId}/global_position/global`, data)
   //debugMessage(`/${copterId}/global_position/global`, data)
 }
+const onMissionWaypointsUpdate = (copterId) => (data) => {
+  emitter.to(`copter_${copterId}`).emit(`/${copterId}/mission/waypoints`, data)
+}
 const onGlobalPositionLocalUpdate = (copterId) => (data) => {
   emitter.to(`copter_${copterId}`).emit(`/${copterId}/global_position/local`, data)
   //debugMessage(`/${copterId}/global_position/local`, data)
@@ -295,6 +298,24 @@ const onGeoFence = (copterId) => async (topic, message) => {
   emitter.to(`copter_${copterId}`).emit(`/${copterId}/fence`, { action, data, res })
 }
 
+const onMission = (copterId) => async (topic, message) => {
+  const { action, data } = JSON.parse(message)
+  const copter = copters[copterId]
+  let res = undefined
+  
+  if(action === 'pull'){
+    res = await copter.missionPull()
+  } else if ( action === 'push'){
+    let { waypoints } = data
+    res = await copter.missionPush(waypoints)
+  } else if (action === 'clear'){
+    res = await copter.missionClear()
+  } else if ( action === 'set_current'){
+    res = await copter.missionSetCurrent()
+  }
+  emitter.to(`copter_${copterId}`).emit(`/${copterId}/mission`, { action, data, res })
+}
+
 const onRttTestCmd = (copterId) => (topic, message) => {
   let data = JSON.parse(message)
   logger.debug(`rtt_test: ${data.frontendId} ${Date.now()}`)
@@ -336,6 +357,7 @@ const connetToCopter = (copterId) => {
   let modeSub = new Redis(config.redis)
   let streamRateSub = new Redis(config.redis)
   let geoFenceSub = new Redis(config.redis)
+  let missionSub = new Redis(config.redis)
   let rttTestSub = new Redis(config.redis)
 
   
@@ -348,6 +370,7 @@ const connetToCopter = (copterId) => {
   copter.addListener('global_position/global', onGlobalPositionGlobalUpdate(copterId))
   copter.addListener('global_position/rel_alt', onRelativeAltitudeUpdate(copterId))
   copter.addListener('global_position/compass_hdg', onCompassUpdate(copterId))
+  copter.addListener('mission/waypoints', onMissionWaypointsUpdate(copterId))
   copter.addListener(`rtt_resp`, onRttRespUpdate(copterId));
 
   // copter commands
@@ -382,6 +405,10 @@ const connetToCopter = (copterId) => {
   //goe fence
   geoFenceSub.subscribe(`/${copterId}/fence`)
   geoFenceSub.on('message', onGeoFence(copterId))
+
+  //mission
+  missionSub.subscribe(`/${copterId}/mission`)
+  missionSub.on('message', onMission(copterId))
 
   return true
 

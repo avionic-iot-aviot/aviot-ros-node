@@ -59,7 +59,12 @@ class Copter {
   takeoffClient;
   setFenceClient;
   delFenceClient;
+  getFenceClient;
+  listFenceClient;
   resetFenceClient;
+  streamRateClient;
+  missionPushClient;
+  missionPullClient;
   logger;
   videoroom = undefined
   streamingFeed = undefined
@@ -92,6 +97,8 @@ class Copter {
     this.getFenceClient = rosnode.serviceClient(`/${copterId}/fence/get`, 'aviot_srvs/GetFence');
     this.listFenceClient = rosnode.serviceClient(`/${copterId}/fence/list`, 'aviot_srvs/ListFence');
     this.streamRateClient = rosnode.serviceClient(`/${copterId}/set_stream_rate`, 'mavros_msgs/StreamRate');
+    this.missionPushClient = rosnode.serviceClient(`/${copterId}/mission/push`, 'mavros_msgs/WaypointPush');
+    this.missionPullClient = rosnode.serviceClient(`/${copterId}/mission/pull`, 'mavros_msgs/WaypointPull');
     // copter information
     rosnode.subscribe(`/${copterId}/battery`, sensors_msgs.msg.BatteryState, this.emit('battery'), options);
     rosnode.subscribe(`/${copterId}/state`, mavros_msgs.msg.State, this.emit('state'));
@@ -99,6 +106,7 @@ class Copter {
     rosnode.subscribe(`/${copterId}/global_position/local`, nav_msgs.msg.Odometry,  this.emit('global_position/local'), options);
     rosnode.subscribe(`/${copterId}/global_position/rel_alt`, std_msgs.msg.Float64,  this.emit('global_position/rel_alt'), options);
     rosnode.subscribe(`/${copterId}/global_position/compass_hdg`, std_msgs.msg.Float64,  this.emit('global_position/compass_hdg'), options);
+    rosnode.subscribe(`/${copterId}/mission/waypoints`, mavros_msgs.msg.WaypointList,  this.emit('mission/waypoints'), options);
     rosnode.subscribe(`/${copterId}/rtt_resp`, 'std_msgs/String',  this.emit('rtt_resp'), options2);
     
     // copter commands
@@ -293,6 +301,40 @@ class Copter {
   listFence(){
     this.logger.debug(`List fence`)
     return this.listFenceClient.call({})
+  }
+  missionPull() {
+    this.logger.debug(`Mission pull`)
+    return this.missionPullClient.call({})
+  }
+  missionPush(waypoints) {
+    let wp=[]
+    waypoints.forEach(element => {
+      wp.push({
+        frame: 0,
+        command: 16,
+        is_current: false,
+        autocontinue: false,
+        param1: 0,
+        param2: 0,
+        param3: 0,
+        param4: 0,
+        x_lat: element.lat,
+        y_long: element.lng,
+        z_alt: element.alt,
+      });
+    });
+
+    this.logger.debug(`Mission push`)
+    return this.missionPushClient.call({
+      start_index: 0,
+      waypoints: wp
+    })
+  }
+  missionClear() {
+    return undefined;
+  }
+  missionSetCurrent() {
+    return undefined;
   }
 }
 

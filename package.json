@@ -18,6 +18,7 @@
     "bluebird": "^3.7.1",
     "ioredis": "^4.14.1",
     "janus-gateway-js": "^2.0.2",
+    "longjohn": "^0.2.12",
     "n": "^6.0.1",
     "rosnodejs": "^3.0.1",
     "socket.io-emitter": "^3.1.1",
