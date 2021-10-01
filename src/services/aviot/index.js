@@ -55,6 +55,8 @@ class Copter {
   stopStreamingPub;
   startVideoRoomPub;
   stopVideoRoomPub;
+  servoOpenPub;
+  servoClosePub;
   rttTestPub;
   takeoffClient;
   setFenceClient;
@@ -120,6 +122,10 @@ class Copter {
     // video room
     this.startVideoRoomPub = rosnode.advertise(`/${copterId}/start_video_room`, 'std_msgs/String')
     this.stopVideoRoomPub = rosnode.advertise(`/${copterId}/stop_video_room`, 'std_msgs/String')
+
+    // servo
+    this.servoOpenPub = rosnode.advertise(`/${copterId}/servo/open`, 'std_msgs/String')
+    this.servoClosePub = rosnode.advertise(`/${copterId}/servo/close`, 'std_msgs/String')
 
     // rtt test
     this.rttTestPub = rosnode.advertise(`/${copterId}/rtt_test`, 'std_msgs/String')
@@ -198,6 +204,21 @@ class Copter {
     this.setVelPub.publish({
       header: this.getHeader(),
       twist: { linear, angular }
+    })
+  }
+
+  servoOpen(number){
+    this.logger.debug(`Sending servo open command`,)
+    this.servoOpenPub.publish({
+      header: this.getHeader(),
+      data: JSON.stringify({number})
+    })
+  }
+  servoClose(number){
+    this.logger.debug(`Sending servo close command`,)
+    this.servoClosePub.publish({
+      header: this.getHeader(),
+      data: JSON.stringify({number})
     })
   }
 

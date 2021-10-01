@@ -319,6 +319,21 @@ const onMission = (copterId) => async (topic, message) => {
   emitter.to(`copter_${copterId}`).emit(`/${copterId}/mission`, { action, data, res })
 }
 
+const onServo = (copterId) => async (topic, message) => {
+  const { action, data } = JSON.parse(message)
+  const copter = copters[copterId]
+  let res = undefined
+  
+  if(action === 'open'){
+    const { number } = data
+    res = await copter.servoOpen(number)
+  } else if ( action === 'close'){
+    const { number } = data
+    res = await copter.servoClose(number)
+  }
+  emitter.to(`copter_${copterId}`).emit(`/${copterId}/servo`, { action, data, res })
+}
+
 const onRttTestCmd = (copterId) => (topic, message) => {
   let data = JSON.parse(message)
   logger.debug(`rtt_test: ${data.frontendId} ${Date.now()}`)
@@ -361,6 +376,7 @@ const connetToCopter = (copterId) => {
   let streamRateSub = new Redis(config.redis)
   let geoFenceSub = new Redis(config.redis)
   let missionSub = new Redis(config.redis)
+  let servoSub = new Redis(config.redis)
   let rttTestSub = new Redis(config.redis)
 
   
@@ -413,6 +429,10 @@ const connetToCopter = (copterId) => {
   //mission
   missionSub.subscribe(`/${copterId}/mission`)
   missionSub.on('message', onMission(copterId))
+
+  //servo
+  servoSub.subscribe(`/${copterId}/servo`)
+  servoSub.on('message', onServo(copterId))
 
   return true
 
