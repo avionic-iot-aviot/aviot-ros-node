@@ -57,6 +57,7 @@ class Copter {
   stopVideoRoomPub;
   servoOpenPub;
   servoClosePub;
+  setVolumePub;
   rttTestPub;
   takeoffClient;
   setFenceClient;
@@ -108,6 +109,7 @@ class Copter {
     rosnode.subscribe(`/${copterId}/global_position/local`, nav_msgs.msg.Odometry,  this.emit('global_position/local'), options);
     rosnode.subscribe(`/${copterId}/global_position/rel_alt`, std_msgs.msg.Float64,  this.emit('global_position/rel_alt'), options);
     rosnode.subscribe(`/${copterId}/global_position/compass_hdg`, std_msgs.msg.Float64,  this.emit('global_position/compass_hdg'), options);
+    rosnode.subscribe(`/${copterId}/volume`, 'std_msgs/String',  this.emit('volume'), options2);
     rosnode.subscribe(`/${copterId}/mission/waypoints`, mavros_msgs.msg.WaypointList,  this.emit('mission/waypoints'), options);
     rosnode.subscribe(`/${copterId}/mission/waypoints_real`, mavros_msgs.msg.WaypointList,  this.emit('mission/waypoints_real'), options);
     rosnode.subscribe(`/${copterId}/rtt_resp`, 'std_msgs/String',  this.emit('rtt_resp'), options2);
@@ -126,6 +128,9 @@ class Copter {
     // servo
     this.servoOpenPub = rosnode.advertise(`/${copterId}/servo/open`, 'std_msgs/String')
     this.servoClosePub = rosnode.advertise(`/${copterId}/servo/close`, 'std_msgs/String')
+
+    // volume
+    this.setVolumePub = rosnode.advertise(`/${copterId}/set_volume`, 'std_msgs/String')
 
     // rtt test
     this.rttTestPub = rosnode.advertise(`/${copterId}/rtt_test`, 'std_msgs/String')
@@ -219,6 +224,14 @@ class Copter {
     this.servoClosePub.publish({
       header: this.getHeader(),
       data: JSON.stringify({number})
+    })
+  }
+  
+  setVolume(volume) {
+    this.logger.debug(`Setting volume`,)
+    this.setVolumePub.publish({
+      header: this.getHeader(),
+      data: JSON.stringify({ volume })
     })
   }
 

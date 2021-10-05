@@ -183,6 +183,9 @@ const onCompassUpdate = (copterId) => ({data}) => {
   emitter.to(`copter_${copterId}`).emit(`/${copterId}/global_position/compass_hdg`, data)
   //debugMessage(`/${copterId}/global_position/compass_hdg`, data)
 }
+const onVolumeUpdate = (copterId) => ({data}) => {
+  emitter.to(`copter_${copterId}`).emit(`/${copterId}/volume`, data)
+}
 const onStateUpdate = (copterId) => ({ connected, armed, guided, mode, system_status }) => {
   emitter.to(`copter_${copterId}`).emit(`/${copterId}/state`, { connected, armed, guided, mode, system_status })
 }
@@ -334,6 +337,12 @@ const onServo = (copterId) => async (topic, message) => {
   emitter.to(`copter_${copterId}`).emit(`/${copterId}/servo`, { action, data, res })
 }
 
+const onVolume = (copterId) => async (topic, message) => {
+  let { data } = JSON.parse(message)
+  copters[copterId].setVolume(data.volume);
+
+}
+
 const onRttTestCmd = (copterId) => (topic, message) => {
   let data = JSON.parse(message)
   logger.debug(`rtt_test: ${data.frontendId} ${Date.now()}`)
@@ -377,6 +386,7 @@ const connetToCopter = (copterId) => {
   let geoFenceSub = new Redis(config.redis)
   let missionSub = new Redis(config.redis)
   let servoSub = new Redis(config.redis)
+  let volumeSub = new Redis(config.redis)
   let rttTestSub = new Redis(config.redis)
 
   
@@ -389,6 +399,7 @@ const connetToCopter = (copterId) => {
   copter.addListener('global_position/global', onGlobalPositionGlobalUpdate(copterId))
   copter.addListener('global_position/rel_alt', onRelativeAltitudeUpdate(copterId))
   copter.addListener('global_position/compass_hdg', onCompassUpdate(copterId))
+  copter.addListener('volume', onVolumeUpdate(copterId))
   copter.addListener('mission/waypoints', onMissionWaypointsUpdate(copterId))
   copter.addListener('mission/waypoints_real', onMissionWaypointsRealUpdate(copterId))
   copter.addListener(`rtt_resp`, onRttRespUpdate(copterId));
@@ -433,6 +444,10 @@ const connetToCopter = (copterId) => {
   //servo
   servoSub.subscribe(`/${copterId}/servo`)
   servoSub.on('message', onServo(copterId))
+
+  //volume
+  volumeSub.subscribe(`/${copterId}/volume`)
+  volumeSub.on('message', onVolume(copterId))
 
   return true
 
