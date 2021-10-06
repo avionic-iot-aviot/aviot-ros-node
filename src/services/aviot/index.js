@@ -68,6 +68,7 @@ class Copter {
   streamRateClient;
   missionPushClient;
   missionPullClient;
+  missionClearClient;
   logger;
   videoroom = undefined
   streamingFeed = undefined
@@ -102,6 +103,7 @@ class Copter {
     this.streamRateClient = rosnode.serviceClient(`/${copterId}/set_stream_rate`, 'mavros_msgs/StreamRate');
     this.missionPushClient = rosnode.serviceClient(`/${copterId}/mission/push`, 'mavros_msgs/WaypointPush');
     this.missionPullClient = rosnode.serviceClient(`/${copterId}/mission/pull`, 'mavros_msgs/WaypointPull');
+    this.missionClearClient = rosnode.serviceClient(`/${copterId}/mission/clear`, 'mavros_msgs/WaypointClear');
     // copter information
     rosnode.subscribe(`/${copterId}/battery`, sensors_msgs.msg.BatteryState, this.emit('battery'), options);
     rosnode.subscribe(`/${copterId}/state`, mavros_msgs.msg.State, this.emit('state'));
@@ -366,7 +368,8 @@ class Copter {
     })
   }
   missionClear() {
-    return undefined;
+    this.logger.debug(`Mission clean`)
+    return this.missionClearClient.call({})
   }
   missionSetCurrent() {
     return undefined;
