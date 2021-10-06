@@ -174,7 +174,7 @@ class Copter {
 
   async armThrottle(force) {
     this.logger.debug(`Arming throttle`)
-    await this.setGuidedMode()
+    //await this.setGuidedMode()
     if(!this.armed || force){
       await this.armClient.call({ value: true })
     }
@@ -196,7 +196,7 @@ class Copter {
       await this.armThrottle()
     }
     await Promise.delay(1000)
-    await this.setGuidedMode()
+    //await this.setGuidedMode()
     await this.takeoffClient.call({ min_pitch: 1, yaw: 1, latitude, longitude, altitude })
     return true
   }
